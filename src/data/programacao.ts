@@ -26,7 +26,7 @@ export const congresso = {
   galeriaUrl: "", // link da galeria com busca por selfie (a definir)
 };
 
-export const paineis: Painel[] = [
+const programacao: Painel[] = [
   {
     slug: "abertura",
     numero: null,
@@ -185,6 +185,22 @@ export const paineis: Painel[] = [
     ],
   },
 ];
+
+// Fotos em public/palestrantes/<nome-sem-acento>.jpg, extraídas do carômetro.
+export function slugNome(nome: string) {
+  return nome
+    .replace(/,.*$/, "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export const paineis: Painel[] = programacao.map((painel) => ({
+  ...painel,
+  palestrantes: painel.palestrantes.map((p) => ({ foto: `/palestrantes/${slugNome(p.nome)}.jpg`, ...p })),
+}));
 
 export const dias = [
   { data: "2026-11-11", rotulo: "Quarta, 11/11" },
