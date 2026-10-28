@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Exemplo de painel · XIV Congresso OAB",
+  title: "Demonstração · XIV Congresso OAB",
   robots: { index: false, follow: false },
 };
 

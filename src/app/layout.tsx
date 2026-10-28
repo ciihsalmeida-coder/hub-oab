@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Poppins } from "next/font/google";
+import { Montserrat } from "next/font/google";
+import { Rodape } from "@/components/Marca";
 import "./globals.css";
 
-const dmSans = DM_Sans({ variable: "--font-dm-sans", subsets: ["latin"] });
-const poppins = Poppins({
-  variable: "--font-poppins",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
-  weight: ["600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -22,11 +22,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${dmSans.variable} ${poppins.variable} font-sans antialiased`}>
+      <body className={`${montserrat.variable} font-sans antialiased`}>
         {children}
-        <footer className="px-4 py-8 text-center text-xs text-muted">
-          Cobertura Mzen Films · XIV Congresso OAB 2026
-        </footer>
+        <Rodape />
       </body>
     </html>
   );

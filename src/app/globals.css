@@ -1,30 +1,40 @@
 @import "tailwindcss";
 
+/* Identidade do XIV Congresso (arte oficial OAB/SC): névoa sobre o mar,
+   azul-marinho, azul-claro da faixa de datas e vermelho escuro. */
 :root {
-  --navy: #111c2e;
-  --navy-2: #1a2a44;
-  --cream: #f3f0ea;
-  --card: #faf8f4;
-  --red: #e03a2f;
-  --purple: #7c3aed;
-  --muted: #5b6474;
-  --line: #e4e0d8;
+  --navy: #0f2a44;
+  --navy-2: #1b3f61;
+  --sea: #2c5878;
+  --fog: #eef2f5;
+  --sky: #2fa9df;
+  --wine: #8e1b1b;
+  --card: #ffffff;
+  --muted: #5a6b7b;
+  --line: #dbe3ea;
 }
 
 @theme inline {
   --color-navy: var(--navy);
   --color-navy-2: var(--navy-2);
-  --color-cream: var(--cream);
+  --color-sea: var(--sea);
+  --color-fog: var(--fog);
+  --color-sky: var(--sky);
+  --color-wine: var(--wine);
   --color-card: var(--card);
-  --color-red: var(--red);
-  --color-purple: var(--purple);
   --color-muted: var(--muted);
   --color-line: var(--line);
-  --font-sans: var(--font-dm-sans);
-  --font-display: var(--font-poppins);
+  --font-sans: var(--font-montserrat);
+  --font-display: var(--font-montserrat);
 }
 
 body {
-  background: var(--cream);
+  background: var(--fog);
   color: var(--navy);
+}
+
+/* Névoa clara no topo descendo para o mar, como no cartaz do congresso. */
+.ceu-mar {
+  background:
+    linear-gradient(180deg, #f4f6f8 0%, #dfe6ec 30%, #9fb3c4 55%, #3d6585 78%, #17344f 100%);
 }
