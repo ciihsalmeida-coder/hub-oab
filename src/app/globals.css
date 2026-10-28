@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+:root {
+  --navy: #111c2e;
+  --navy-2: #1a2a44;
+  --cream: #f3f0ea;
+  --card: #faf8f4;
+  --red: #e03a2f;
+  --purple: #7c3aed;
+  --muted: #5b6474;
+  --line: #e4e0d8;
+}
+
+@theme inline {
+  --color-navy: var(--navy);
+  --color-navy-2: var(--navy-2);
+  --color-cream: var(--cream);
+  --color-card: var(--card);
+  --color-red: var(--red);
+  --color-purple: var(--purple);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-poppins);
+}
+
+body {
+  background: var(--cream);
+  color: var(--navy);
+}
