@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "XIV Congresso OAB · Hub",
   description:
     "Programação, palestrantes, fotos e cortes do XIV Congresso Nacional de Direito Marítimo, Portuário e Aduaneiro.",
+  appleWebApp: { capable: true, title: "Congresso OAB", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = { themeColor: "#111c2e" };

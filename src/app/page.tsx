@@ -22,8 +22,14 @@ export default function Home() {
           <p className="mt-6 max-w-md text-sm font-medium text-white/90">
             Resumos, cortes em vídeo e fotos de cada painel, publicados no mesmo dia.
           </p>
-          <div className="mt-5">
+          <div className="mt-5 space-y-3">
             <GaleriaBotao />
+            <Link
+              href="/instalar"
+              className="block rounded-2xl bg-white/15 px-5 py-3 text-center text-sm font-bold text-white backdrop-blur"
+            >
+              📲 Instale o app do congresso no celular
+            </Link>
           </div>
         </div>
       </header>
