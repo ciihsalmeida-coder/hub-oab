@@ -39,7 +39,7 @@ export async function salvarRascunho(slug: string, form: FormData) {
   atualizarSite(slug);
 }
 
-// Publica o texto e as falas. Só quem tem papel de aprovador (a pessoa indicada pela OAB).
+// Publica texto, falas, fotos e cortes do painel. Só quem tem papel de aprovador (a pessoa indicada pela OAB).
 export async function aprovar(slug: string) {
   const { db, membro } = await exigirEquipe();
   if (membro?.papel !== "aprovador") throw new Error("Só o aprovador da OAB pode publicar.");
@@ -57,8 +57,10 @@ export async function aprovar(slug: string) {
     })
     .eq("slug", slug);
   if (r1.error) throw r1.error;
-  const r2 = await db.from("falas").update({ status: "publicado" }).eq("painel_slug", slug);
-  if (r2.error) throw r2.error;
+  for (const tabela of ["falas", "fotos", "cortes"]) {
+    const r = await db.from(tabela).update({ status: "publicado" }).eq("painel_slug", slug);
+    if (r.error) throw r.error;
+  }
   atualizarSite(slug);
 }
 
@@ -71,8 +73,39 @@ export async function despublicar(slug: string) {
     .update({ resumo_publicado: null, pontos_publicados: [], status_texto: "rascunho" })
     .eq("slug", slug);
   if (r1.error) throw r1.error;
-  const r2 = await db.from("falas").update({ status: "rascunho" }).eq("painel_slug", slug);
-  if (r2.error) throw r2.error;
+  for (const tabela of ["falas", "fotos", "cortes"]) {
+    const r = await db.from(tabela).update({ status: "rascunho" }).eq("painel_slug", slug);
+    if (r.error) throw r.error;
+  }
+  atualizarSite(slug);
+}
+
+// Marca de quem é a foto (para ela entrar no kit do palestrante).
+export async function marcarPalestranteDaFoto(slug: string, fotoId: string, palestranteId: string | null) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const r = await db.from("fotos").update({ palestrante_id: palestranteId }).eq("id", fotoId);
+  if (r.error) throw r.error;
+  atualizarSite(slug);
+}
+
+export async function removerFoto(slug: string, fotoId: string) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const { data, error } = await db.from("fotos").delete().eq("id", fotoId).select("url, miniatura_url").single();
+  if (error) throw error;
+  const caminhos = [data.url, data.miniatura_url]
+    .filter(Boolean)
+    .map((u) => String(u).split("/storage/v1/object/public/fotos/")[1])
+    .filter(Boolean);
+  if (caminhos.length) await db.storage.from("fotos").remove(caminhos);
+  atualizarSite(slug);
+}
+
+// Depois que o navegador termina de enviar as fotos, atualiza as páginas.
+export async function fotosEnviadas(slug: string) {
+  const { membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
   atualizarSite(slug);
 }
 

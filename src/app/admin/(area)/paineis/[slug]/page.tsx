@@ -3,16 +3,18 @@ import { notFound } from "next/navigation";
 import { exigirEquipe } from "@/lib/equipe";
 import { situacaoDoPainel, Status } from "../../Status";
 import { Editor } from "./Editor";
+import { Fotos } from "./Fotos";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditarPainel({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { db, membro } = await exigirEquipe();
-  const [painel, palestrantes, falas] = await Promise.all([
+  const [painel, palestrantes, falas, fotos] = await Promise.all([
     db.from("paineis").select("slug, numero, titulo, horario, resumo, pontos, status_texto, aprovado_em").eq("slug", slug).maybeSingle(),
     db.from("palestrantes").select("id, nome").eq("painel_slug", slug).order("ordem"),
     db.from("falas").select("texto, palestrante_id").eq("painel_slug", slug).order("ordem"),
+    db.from("fotos").select("id, url, miniatura_url, palestrante_id, status").eq("painel_slug", slug).order("ordem"),
   ]);
   if (!painel.data) notFound();
   const p = painel.data;
@@ -43,6 +45,24 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
         falas={(falas.data ?? []).map((f) => ({ texto: f.texto, palestranteId: f.palestrante_id }))}
         palestrantes={palestrantes.data ?? []}
       />
+
+      <details className="mt-10 rounded-2xl border border-line bg-card p-4">
+        <summary className="cursor-pointer font-bold">Plano B: enviar fotos direto do computador</summary>
+        <p className="mt-1 text-sm text-muted">Use só se o Google Drive não estiver funcionando.</p>
+        <div className="mt-4">
+          <Fotos
+            slug={slug}
+            palestrantes={palestrantes.data ?? []}
+            fotos={(fotos.data ?? []).map((f) => ({
+              id: f.id,
+              url: f.url,
+              miniatura: f.miniatura_url,
+              palestranteId: f.palestrante_id,
+              publicada: f.status === "publicado",
+            }))}
+          />
+        </div>
+      </details>
     </div>
   );
 }
