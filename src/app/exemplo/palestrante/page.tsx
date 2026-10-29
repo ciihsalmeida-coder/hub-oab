@@ -1,5 +1,5 @@
 import { Assinatura, FaixaLocal } from "@/components/Marca";
-import { Copiar } from "../Botoes";
+import { Copiar } from "@/components/Botoes";
 import { cortes, falas, legendaPalestrante, painelExemplo, VIDEO_EXEMPLO } from "../dados";
 import { FaixaDemo, FotoFicticia, Secao } from "../Demo";
 

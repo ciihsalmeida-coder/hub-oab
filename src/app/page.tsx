@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { GaleriaBotao } from "@/components/GaleriaBotao";
 import { Assinatura, FaixaLocal, TituloCongresso } from "@/components/Marca";
-import { dias, paineis } from "@/data/programacao";
+import { dias } from "@/data/programacao";
+import { listarPaineis } from "@/lib/dados";
+
+export const revalidate = 60;
 
 const corArea: Record<string, string> = {
   Abertura: "bg-wine text-white",
@@ -10,7 +13,8 @@ const corArea: Record<string, string> = {
   Marítimo: "bg-sea text-white",
 };
 
-export default function Home() {
+export default async function Home() {
+  const paineis = await listarPaineis();
   return (
     <main>
       <header className="ceu-mar px-4 pt-8 pb-10">

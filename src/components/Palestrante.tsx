@@ -1,4 +1,4 @@
-import type { Palestrante as P } from "@/data/programacao";
+type P = { nome: string; cargo: string; foto?: string; pendente?: string };
 
 export function iniciais(nome: string) {
   const partes = nome.replace(/,.*$/, "").split(" ").filter(Boolean);

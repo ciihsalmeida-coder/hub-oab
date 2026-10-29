@@ -1,7 +1,7 @@
 import { GaleriaBotao } from "@/components/GaleriaBotao";
 import { Assinatura, FaixaLocal, Voltar } from "@/components/Marca";
 import { Avatar } from "@/components/Palestrante";
-import { Compartilhar } from "./Botoes";
+import { Compartilhar } from "@/components/Botoes";
 import { cortes, falas, painelExemplo, palestrantesExemplo, pontosPrincipais, resumo, VIDEO_EXEMPLO } from "./dados";
 import { FaixaDemo, FotoFicticia, Secao } from "./Demo";
 
