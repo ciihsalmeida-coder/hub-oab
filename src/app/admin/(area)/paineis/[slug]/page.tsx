@@ -17,7 +17,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
   const [painel, palestrantes, falas, fotos, envios, cortes] = await Promise.all([
     db.from("paineis").select("slug, numero, titulo, horario, resumo, pontos, status_texto, aprovado_em").eq("slug", slug).maybeSingle(),
     db.from("palestrantes").select("id, nome").eq("painel_slug", slug).order("ordem"),
-    db.from("falas").select("texto, palestrante_id, status").eq("painel_slug", slug).order("ordem"),
+    db.from("falas").select("texto, palestrante_id, status, inicio_ms").eq("painel_slug", slug).order("ordem"),
     db.from("fotos").select("id, url, miniatura_url, palestrante_id, status").eq("painel_slug", slug).order("ordem"),
     db
       .from("envios")
@@ -69,7 +69,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
         slug={slug}
         resumo={p.resumo ?? ""}
         pontos={(p.pontos as string[]) ?? []}
-        falas={(falas.data ?? []).map((f) => ({ texto: f.texto, palestranteId: f.palestrante_id }))}
+        falas={(falas.data ?? []).map((f) => ({ texto: f.texto, palestranteId: f.palestrante_id, inicioMs: f.inicio_ms }))}
         palestrantes={lista}
       />
 
@@ -89,7 +89,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
         />
       </Cartao>
 
-      <Aprovacao slug={slug} podeAprovar={membro?.papel === "aprovador"} publicado={situacao === "publicado"} pendentes={pendentes} />
+      <Aprovacao slug={slug} titulo={p.titulo} podeAprovar={membro?.papel === "aprovador"} publicado={situacao === "publicado"} pendentes={pendentes} />
     </div>
   );
 }

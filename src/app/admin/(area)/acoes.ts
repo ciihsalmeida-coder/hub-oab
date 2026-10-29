@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { exigirEquipe } from "@/lib/equipe";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
-type FalaRascunho = { texto: string; palestranteId: string | null };
+type FalaRascunho = { texto: string; palestranteId: string | null; inicioMs?: number | null };
 
 function atualizarSite(slug: string) {
   revalidatePath("/");
@@ -33,7 +33,13 @@ export async function salvarRascunho(slug: string, form: FormData) {
   const validas = falas.filter((f) => f.texto.trim());
   if (validas.length) {
     const inserir = await db.from("falas").insert(
-      validas.map((f, i) => ({ painel_slug: slug, texto: f.texto.trim(), palestrante_id: f.palestranteId || null, ordem: i })),
+      validas.map((f, i) => ({
+        painel_slug: slug,
+        texto: f.texto.trim(),
+        palestrante_id: f.palestranteId || null,
+        inicio_ms: f.inicioMs ?? null,
+        ordem: i,
+      })),
     );
     if (inserir.error) throw inserir.error;
   }
@@ -131,7 +137,7 @@ export async function refazerComIA(slug: string) {
   if (!envio) throw new Error("Nenhum áudio deste painel no Drive ainda.");
   const r = await db
     .from("envios")
-    .update({ etapa: envio.assemblyai_id ? "transcrevendo" : "recebido", erro: null, bloqueado_ate: null })
+    .update({ etapa: envio.assemblyai_id ? "transcrevendo" : "recebido", erro: null, bloqueado_ate: null, tentativas: 0 })
     .eq("id", envio.id);
   if (r.error) throw r.error;
   atualizarSite(slug);
@@ -198,4 +204,15 @@ export async function definirFotosAuto(ligado: boolean) {
   const r = await supabaseAdmin().from("segredos").upsert({ chave: "fotos_auto", valor: ligado ? "sim" : "nao" });
   if (r.error) throw r.error;
   revalidatePath("/admin");
+}
+
+// Link da galeria contratada (busca por selfie), usado no botão "Encontre suas fotos" de todas as páginas.
+export async function definirGaleria(url: string) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const limpo = url.trim();
+  if (limpo && !/^https:\/\/\S+$/.test(limpo)) throw new Error("O link precisa começar com https://");
+  const r = await db.from("paineis").update({ galeria_url: limpo || null }).neq("slug", "");
+  if (r.error) throw r.error;
+  revalidatePath("/", "layout");
 }

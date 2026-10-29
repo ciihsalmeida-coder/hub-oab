@@ -13,6 +13,7 @@ export function Cadastro({ painel }: { painel?: string }) {
   const [estado, setEstado] = useState<"livre" | "enviando" | "ok" | "erro">("livre");
 
   async function enviar(form: FormData) {
+    if (form.get("site")) return setEstado("ok"); // robô preencheu o campo escondido
     setEstado("enviando");
     const { error } = await supabaseNavegador()
       .from("cadastros")
@@ -43,6 +44,7 @@ export function Cadastro({ painel }: { painel?: string }) {
     <form action={enviar} className="rounded-2xl bg-navy p-5 text-white">
       <p className="text-lg leading-tight font-extrabold">Quer receber os resumos e vídeos dos painéis?</p>
       <p className="mt-1 text-sm text-white/75">Opcional. O conteúdo continua aberto para todos.</p>
+      <input name="site" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
       <div className="mt-4 space-y-3">
         <Campo nome="nome" rotulo="Nome" obrigatorio autoComplete="name" />
         <Campo nome="email" rotulo="E-mail" tipo="email" obrigatorio autoComplete="email" />

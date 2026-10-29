@@ -50,6 +50,15 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 - pg_cron "sincronizar-drive" chama /api/drive/sincronizar a cada 2 min (token em public.segredos).
 - Vídeos acima de 45 MB falham no plano gratuito do Supabase (limite 50 MB/arquivo).
 
+## Riscos conhecidos (revisão 29/10)
+- Vercel Hobby: funções com limite de tempo menor; `/api/ia/processar` pede 300 s (Claude em painel
+  de 1 h). Assinar Vercel Pro antes do evento. Envios têm limite de 4 tentativas por etapa.
+- Supabase Free: 1 GB de arquivos. 10 painéis × (fotos + 5 cortes de ~13 MB) passa disso → Pro.
+- Regra de aprovação: vídeo novo em corte já aprovado volta a rascunho (cortar.py); "Refazer com
+  a IA" substitui falas e cortes automáticos do painel (sem duplicar).
+- Proteção de senhas vazadas (Supabase Auth) só no plano Pro: ligar ao assinar.
+- `pg_net` no schema public (aviso do Supabase): limitação conhecida da extensão, sem impacto.
+
 ## Páginas de demonstração
 `/exemplo` (público) e `/exemplo/palestrante` — conteúdo fictício. APAGAR antes do evento.
 

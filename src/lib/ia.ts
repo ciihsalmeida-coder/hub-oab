@@ -22,7 +22,20 @@ async function assembly(caminho: string, init?: RequestInit) {
   return r.json();
 }
 
-type Envio = { id: string; painel_slug: string; tipo: string; origem_drive_id: string | null; etapa: string; assemblyai_id: string | null; nome: string | null };
+type Envio = {
+  id: string;
+  painel_slug: string;
+  tipo: string;
+  origem_drive_id: string | null;
+  etapa: string;
+  assemblyai_id: string | null;
+  nome: string | null;
+  tentativas: number;
+  criado_em: string;
+};
+
+const MAX_TENTATIVAS = 4;
+const ESPERA_AUDIO_MS = 15 * 60_000; // um vídeo só é transcrito se o áudio não chegar nesse tempo
 
 // Pega um envio para trabalhar, com trava de 5 minutos para o agendador não processar o mesmo duas vezes.
 async function reservarEnvio(): Promise<Envio | null> {
@@ -30,18 +43,22 @@ async function reservarEnvio(): Promise<Envio | null> {
   const agora = new Date().toISOString();
   const { data: candidatos } = await db
     .from("envios")
-    .select("id")
+    .select("id, tipo, etapa, criado_em")
     .in("etapa", ["recebido", "transcrevendo", "escrevendo"])
     .or(`bloqueado_ate.is.null,bloqueado_ate.lt.${agora}`)
     .order("criado_em")
-    .limit(5);
-  for (const c of candidatos ?? []) {
+    .limit(20);
+  // Vídeos recém-chegados esperam o áudio sem segurar a fila dos outros painéis.
+  const prontos = (candidatos ?? []).filter(
+    (c) => c.tipo === "audio" || c.etapa !== "recebido" || Date.now() - new Date(c.criado_em).getTime() >= ESPERA_AUDIO_MS,
+  );
+  for (const c of prontos.slice(0, 5)) {
     const { data } = await db
       .from("envios")
       .update({ bloqueado_ate: new Date(Date.now() + 5 * 60_000).toISOString() })
       .eq("id", c.id)
       .or(`bloqueado_ate.is.null,bloqueado_ate.lt.${agora}`)
-      .select("id, painel_slug, tipo, origem_drive_id, etapa, assemblyai_id, nome")
+      .select("id, painel_slug, tipo, origem_drive_id, etapa, assemblyai_id, nome, tentativas, criado_em")
       .maybeSingle();
     if (data) return data as Envio;
   }
@@ -65,9 +82,11 @@ async function motivoParaIgnorar(envio: Envio) {
 }
 
 async function mudarEtapa(id: string, campos: Record<string, unknown>) {
+  // Ao mudar de etapa, a contagem de tentativas recomeça.
+  const zerar = "etapa" in campos ? { tentativas: 0 } : {};
   await supabaseAdmin()
     .from("envios")
-    .update({ ...campos, bloqueado_ate: null, atualizado_em: new Date().toISOString() })
+    .update({ ...campos, ...zerar, bloqueado_ate: null, atualizado_em: new Date().toISOString() })
     .eq("id", id);
 }
 
@@ -75,8 +94,19 @@ async function mudarEtapa(id: string, campos: Record<string, unknown>) {
 export async function processarProximo(): Promise<{ envio?: string; etapa?: string; painel?: string }> {
   const envio = await reservarEnvio();
   if (!envio) return {};
+  // Cada passo que trava (por exemplo, tempo esgotado) conta uma tentativa; depois de 4, desiste e avisa.
+  if (envio.tentativas >= MAX_TENTATIVAS) {
+    await mudarEtapa(envio.id, { etapa: "erro", erro: "A IA tentou várias vezes e não conseguiu. Use “Refazer com a IA” ou avise o suporte." });
+    return { envio: envio.id, etapa: "erro" };
+  }
+  await supabaseAdmin().from("envios").update({ tentativas: envio.tentativas + 1 }).eq("id", envio.id);
   try {
     if (envio.etapa === "recebido") {
+      if (envio.tipo === "video" && Date.now() - new Date(envio.criado_em).getTime() < ESPERA_AUDIO_MS) {
+        // Dá tempo de o áudio da mesa chegar: ele é menor, mais rápido e tem som melhor.
+        await supabaseAdmin().from("envios").update({ bloqueado_ate: null, tentativas: envio.tentativas }).eq("id", envio.id);
+        return { envio: envio.id, etapa: "recebido" };
+      }
       const motivo = await motivoParaIgnorar(envio);
       if (motivo) {
         await mudarEtapa(envio.id, { etapa: "ignorado", erro: motivo });
@@ -270,7 +300,7 @@ ${transcricao}
     .eq("slug", envio.painel_slug);
   if (r1.error) throw r1.error;
 
-  await db.from("falas").delete().eq("painel_slug", envio.painel_slug).eq("status", "rascunho");
+  await db.from("falas").delete().eq("painel_slug", envio.painel_slug);
   if (resultado.falas.length) {
     const r2 = await db.from("falas").insert(
       resultado.falas.map((f, i) => ({
@@ -285,7 +315,7 @@ ${transcricao}
   }
 
   // Cortes sugeridos: entram sem vídeo; o robô de edição (ou a equipe) preenche depois.
-  await db.from("cortes").delete().eq("painel_slug", envio.painel_slug).eq("origem", "auto").is("video_url", null);
+  await db.from("cortes").delete().eq("painel_slug", envio.painel_slug).eq("origem", "auto");
   if (resultado.cortes.length) {
     const r3 = await db.from("cortes").insert(
       resultado.cortes.map((c, i) => ({

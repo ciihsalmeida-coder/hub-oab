@@ -4,6 +4,7 @@ import { driveConfigurado } from "@/lib/drive";
 import { exigirEquipe } from "@/lib/equipe";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { Drive } from "./Drive";
+import { Galeria } from "./Galeria";
 import { situacaoDoPainel, Status } from "./Status";
 import { type Etapa, Etapas, Numero } from "./ui";
 
@@ -21,7 +22,7 @@ type Item = { painel_slug: string; status?: string };
 export default async function Admin() {
   const { db, membro } = await exigirEquipe();
   const [paineis, falas, cortes, fotos, cadastros, envios] = await Promise.all([
-    db.from("paineis").select("slug, numero, titulo, data, horario, resumo, pontos, status_texto").order("ordem"),
+    db.from("paineis").select("slug, numero, titulo, data, horario, resumo, pontos, status_texto, galeria_url").order("ordem"),
     db.from("falas").select("painel_slug, status"),
     db.from("cortes").select("painel_slug, status, video_url"),
     db.from("fotos").select("painel_slug, status"),
@@ -92,6 +93,8 @@ export default async function Admin() {
         fotosAuto={fotosAuto?.valor !== "nao"}
         erros={erros.data ?? []}
       />
+
+      <Galeria atual={lista[0]?.galeria_url ?? ""} />
 
       {dias.map((dia) => (
         <section key={dia.data}>

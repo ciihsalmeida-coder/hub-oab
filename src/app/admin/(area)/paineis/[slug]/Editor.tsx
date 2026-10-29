@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { salvarRascunho } from "../../acoes";
 import { Cartao, TituloCartao } from "../../ui";
 
-type Fala = { texto: string; palestranteId: string | null };
+type Fala = { texto: string; palestranteId: string | null; inicioMs?: number | null };
 
 export function Editor(props: {
   slug: string;

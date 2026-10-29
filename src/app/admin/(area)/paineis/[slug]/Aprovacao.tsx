@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { aprovar, despublicar } from "../../acoes";
 
 // Barra fixa no rodapé: publica (ou tira do ar) textos, falas, fotos e cortes do painel de uma vez.
-export function Aprovacao(props: { slug: string; podeAprovar: boolean; publicado: boolean; pendentes: number }) {
+export function Aprovacao(props: { slug: string; titulo: string; podeAprovar: boolean; publicado: boolean; pendentes: number }) {
   const [aviso, setAviso] = useState("");
   const [pendente, iniciar] = useTransition();
 
@@ -59,7 +59,18 @@ export function Aprovacao(props: { slug: string; podeAprovar: boolean; publicado
             </button>
           </>
         ) : (
-          <p className="text-xs text-muted">A aprovação é feita pela pessoa indicada pela OAB.</p>
+          props.pendentes > 0 && (
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(
+                `Olá! O conteúdo do painel “${props.titulo}” está pronto para aprovação: https://hub-oab.vercel.app/admin/paineis/${props.slug}`,
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full bg-green-600 px-5 py-3 text-sm font-extrabold text-white shadow"
+            >
+              Pedir aprovação no WhatsApp
+            </a>
+          )
         )}
       </div>
     </div>

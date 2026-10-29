@@ -233,7 +233,7 @@ def main():
                         bruto=True,
                     )
                 url = f"{SUPABASE_URL}/storage/v1/object/public/cortes/{destino}"
-                atualizar("cortes", {"id": f"eq.{corte['id']}"}, {"video_url": url, "erro": None})
+                atualizar("cortes", {"id": f"eq.{corte['id']}"}, {"video_url": url, "erro": None, "status": "rascunho"})
                 print(f"Corte pronto: {destino}")
             except Exception as erro:  # noqa: BLE001 - registra e segue para o próximo corte
                 print(f"Falha no corte {corte['id']}: {erro}")
