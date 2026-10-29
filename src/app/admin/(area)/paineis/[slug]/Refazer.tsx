@@ -2,9 +2,19 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { refazerComIA } from "../../acoes";
+import { refazerComIA, refazerCortes } from "../../acoes";
 
-export function Refazer({ slug }: { slug: string }) {
+export function Refazer({
+  slug,
+  cortes = false,
+}: {
+  slug: string;
+  cortes?: boolean;
+}) {
+  const acao = cortes ? refazerCortes : refazerComIA;
+  const pergunta = cortes
+    ? "Cortar os vídeos de novo? Os cortes automáticos atuais serão substituídos."
+    : "Refazer o resumo, as falas e os cortes com a IA? O rascunho atual será substituído.";
   const router = useRouter();
   const [aviso, setAviso] = useState("");
   const [pendente, iniciar] = useTransition();
@@ -13,20 +23,22 @@ export function Refazer({ slug }: { slug: string }) {
       <button
         disabled={pendente}
         onClick={() => {
-          if (!confirm("Refazer o resumo, as falas e os cortes com a IA? O rascunho atual será substituído.")) return;
+          if (!confirm(pergunta)) return;
           iniciar(async () => {
             try {
-              await refazerComIA(slug);
+              await acao(slug);
               setAviso("Na fila. Recarregue em alguns minutos.");
               router.refresh();
             } catch (e) {
-              setAviso(`⚠️ ${e instanceof Error ? e.message : "Algo deu errado."}`);
+              setAviso(
+                `⚠️ ${e instanceof Error ? e.message : "Algo deu errado."}`,
+              );
             }
           });
         }}
         className="rounded-full border border-navy px-4 py-1.5 text-xs font-bold disabled:opacity-60"
       >
-        🔄 Refazer com a IA
+        {cortes ? "🎬 Refazer cortes" : "🔄 Refazer com a IA"}
       </button>
       {aviso && <span className="ml-2 text-xs font-semibold">{aviso}</span>}
     </div>

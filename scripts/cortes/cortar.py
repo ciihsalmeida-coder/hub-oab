@@ -24,6 +24,7 @@ SUPABASE_KEY = os.environ["SUPABASE_SECRET_KEY"]
 PAINEL = sys.argv[1]
 TAXA = 100  # quadros de energia por segundo para o alinhamento
 MAX_TENTATIVAS = 3
+CONFIANCA_MINIMA = 1.5  # abaixo disso o áudio e o vídeo provavelmente não são da mesma gravação
 
 
 def supabase(metodo, caminho, corpo=None, cabecalhos=None, bruto=False):
@@ -97,6 +98,20 @@ def atraso_video(audio, video):
     return deslocamentos[melhor] / TAXA, confianca
 
 
+def duracao(caminho):
+    saida = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", caminho],
+        capture_output=True, check=True, text=True,
+    ).stdout
+    return float(saida.strip())
+
+
+def falhar_todos(cortes, motivo):
+    print(motivo)
+    for corte in cortes:
+        atualizar("cortes", {"id": f"eq.{corte['id']}"}, {"tentativas": corte["tentativas"] + 1, "erro": motivo})
+
+
 def ass_tempo(s):
     s = max(0.0, s)
     return f"{int(s // 3600)}:{int(s % 3600 // 60):02d}:{s % 60:05.2f}"
@@ -153,10 +168,13 @@ def main():
 
     envios = consulta(
         "envios",
-        {"painel_slug": f"eq.{PAINEL}", "select": "tipo,origem_drive_id,etapa,transcricao", "order": "criado_em.desc"},
+        {"painel_slug": f"eq.{PAINEL}", "select": "tipo,nome,origem_drive_id,etapa,transcricao", "order": "criado_em.desc"},
     )
-    video = next((e for e in envios if e["tipo"] == "video"), None)
     base = next((e for e in envios if e["etapa"] == "pronto" and e.get("transcricao")), None)
+    videos = [e for e in envios if e["tipo"] == "video"]
+    # Se houver mais de um vídeo, prefere o de mesmo nome do áudio transcrito (ex.: painel.mp3 e painel.mp4).
+    radical = os.path.splitext(base["nome"] or "")[0] if base else ""
+    video = next((v for v in videos if os.path.splitext(v["nome"] or "")[0] == radical), videos[0] if videos else None)
     if not video or not base:
         print("Falta o vídeo ou a transcrição do painel.")
         return
@@ -165,6 +183,8 @@ def main():
         caminho_video = os.path.join(pasta, "painel.mp4")
         print("Baixando vídeo do Drive…")
         baixar_drive(video["origem_drive_id"], caminho_video)
+        total = duracao(caminho_video)
+        print(f"Vídeo: {video['nome']} ({total / 60:.1f} min)")
 
         atraso = 0.0
         if base["tipo"] == "audio":
@@ -173,12 +193,21 @@ def main():
             baixar_drive(base["origem_drive_id"], caminho_audio)
             atraso, confianca = atraso_video(caminho_audio, caminho_video)
             print(f"Atraso calculado: {atraso:+.2f}s (confiança {confianca:.2f})")
+            if confianca < CONFIANCA_MINIMA:
+                falhar_todos(
+                    cortes,
+                    f"Não consegui sincronizar o áudio “{base['nome']}” com o vídeo “{video['nome']}”. "
+                    "Confira se são da mesma gravação.",
+                )
+                return
 
         frases = base["transcricao"].get("falas", [])
         for corte in cortes:
             try:
                 inicio = corte["inicio_ms"] / 1000
                 fim = corte["fim_ms"] / 1000
+                if inicio + atraso < 0 or fim + atraso > total:
+                    raise ValueError(f"O trecho ({inicio + atraso:.0f}s a {fim + atraso:.0f}s) fica fora do vídeo ({total:.0f}s).")
                 ass = os.path.join(pasta, f"{corte['id']}.ass")
                 saida = os.path.join(pasta, f"{corte['id']}.mp4")
                 legenda_ass(frases, inicio, fim, ass)
@@ -188,10 +217,12 @@ def main():
                         "-ss", f"{max(0, inicio + atraso):.2f}", "-i", caminho_video, "-t", f"{fim - inicio:.2f}",
                         "-vf", f"scale=-2:1920,crop=1080:1920,subtitles={ass}",
                         "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-maxrate", "5M", "-bufsize", "10M",
-                        "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", saida,
+                        "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", saida,
                     ],
                     check=True,
                 )
+                if os.path.getsize(saida) < 200_000:
+                    raise ValueError("O corte saiu vazio.")
                 destino = f"{PAINEL}/auto-{corte['id']}.mp4"
                 with open(saida, "rb") as arq:
                     supabase(

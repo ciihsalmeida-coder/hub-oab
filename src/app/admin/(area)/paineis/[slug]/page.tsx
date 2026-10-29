@@ -49,7 +49,7 @@ export default async function EditarPainel({
       db
         .from("cortes")
         .select(
-          "id, titulo, inicio_ms, fim_ms, legenda_sugerida, video_url, palestrante_id",
+          "id, titulo, inicio_ms, fim_ms, legenda_sugerida, video_url, palestrante_id, erro, tentativas",
         )
         .eq("painel_slug", slug)
         .order("ordem"),
@@ -172,9 +172,11 @@ function tempo(ms: number | null) {
 }
 
 function Cortes({
+  slug,
   cortes,
   palestrantes,
 }: {
+  slug: string;
   cortes: {
     id: string;
     titulo: string;
@@ -183,6 +185,8 @@ function Cortes({
     legenda_sugerida: string | null;
     video_url: string | null;
     palestrante_id: string | null;
+    erro: string | null;
+    tentativas: number;
   }[];
   palestrantes: { id: string; nome: string }[];
 }) {
@@ -197,6 +201,7 @@ function Cortes({
         Trechos escolhidos pela IA. Só aparecem no site os que já têm vídeo
         (gerado pelo robô ou colocado na pasta “Cortes de vídeo”).
       </p>
+      <Refazer slug={slug} cortes />
       <ul className="space-y-3">
         {cortes.map((c) => (
           <li
@@ -221,8 +226,15 @@ function Cortes({
                 {c.inicio_ms != null &&
                   ` · de ${tempo(c.inicio_ms)} a ${tempo(c.fim_ms)}`}
                 {" · "}
-                {c.video_url ? "🎬 vídeo pronto" : "⏳ sem vídeo ainda"}
+                {c.video_url
+                  ? "🎬 vídeo pronto"
+                  : c.tentativas >= 3
+                    ? "⚠️ o robô desistiu"
+                    : "⏳ sem vídeo ainda"}
               </p>
+              {c.erro && (
+                <p className="mt-1 font-semibold text-wine">{c.erro}</p>
+              )}
               {c.legenda_sugerida && (
                 <p className="mt-2 rounded-lg bg-fog p-2">
                   💬 {c.legenda_sugerida}

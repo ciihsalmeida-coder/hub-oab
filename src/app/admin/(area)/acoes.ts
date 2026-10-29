@@ -165,3 +165,18 @@ export async function marcarKitEnviado(palestranteId: string) {
   await db.from("kits").update({ enviado_em: new Date().toISOString() }).eq("palestrante_id", palestranteId);
   revalidatePath("/admin/palestrantes");
 }
+
+// Manda o robô cortar de novo os trechos escolhidos pela IA (por exemplo, depois de trocar o vídeo).
+export async function refazerCortes(slug: string) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const r1 = await db
+    .from("cortes")
+    .update({ video_url: null, tentativas: 0, erro: null, status: "rascunho" })
+    .eq("painel_slug", slug)
+    .eq("origem", "auto");
+  if (r1.error) throw r1.error;
+  const r2 = await db.from("paineis").update({ cortes_disparado_em: null }).eq("slug", slug);
+  if (r2.error) throw r2.error;
+  atualizarSite(slug);
+}
