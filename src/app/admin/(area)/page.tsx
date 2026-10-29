@@ -11,7 +11,7 @@ export default async function Admin() {
   const { db } = await exigirEquipe();
   const [paineis, falas, cortes, fotos, cadastros] = await Promise.all([
     db.from("paineis").select("slug, numero, titulo, data, horario, resumo, pontos, status_texto").order("ordem"),
-    db.from("falas").select("painel_slug"),
+    db.from("falas").select("painel_slug, status"),
     db.from("cortes").select("painel_slug, status"),
     db.from("fotos").select("painel_slug, status"),
     db.from("cadastros").select("id", { count: "exact", head: true }),
@@ -40,6 +40,9 @@ export default async function Admin() {
               .filter((p) => p.data === dia.data)
               .map((p) => {
                 const nFalas = conta(falas.data, p.slug);
+                const pendentes =
+                  conta(falas.data, p.slug, "rascunho") + conta(fotos.data, p.slug, "rascunho") + conta(cortes.data, p.slug, "rascunho");
+                const total = nFalas + conta(fotos.data, p.slug) + conta(cortes.data, p.slug);
                 return (
                   <li key={p.slug}>
                     <Link href={`/admin/paineis/${p.slug}`} className="block rounded-2xl border border-line bg-card p-4">
@@ -47,12 +50,12 @@ export default async function Admin() {
                         <span className="text-xs font-bold text-muted uppercase">
                           {p.horario} · {p.numero ? `Painel ${p.numero}` : "Abertura"}
                         </span>
-                        <Status situacao={situacaoDoPainel(p, nFalas)} />
+                        <Status situacao={situacaoDoPainel(p, pendentes, total)} />
                       </div>
                       <p className="mt-1 leading-snug font-bold">{p.titulo}</p>
                       <p className="mt-1 text-xs text-muted">
                         {nFalas} fala(s) · {conta(cortes.data, p.slug)} corte(s), {conta(cortes.data, p.slug, "rascunho")} em
-                        rascunho · {conta(fotos.data, p.slug)} foto(s)
+                        rascunho · {conta(fotos.data, p.slug)} foto(s), {conta(fotos.data, p.slug, "rascunho")} em rascunho
                       </p>
                     </Link>
                   </li>

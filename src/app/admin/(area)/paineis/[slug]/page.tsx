@@ -13,12 +13,13 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
   const [painel, palestrantes, falas, fotos] = await Promise.all([
     db.from("paineis").select("slug, numero, titulo, horario, resumo, pontos, status_texto, aprovado_em").eq("slug", slug).maybeSingle(),
     db.from("palestrantes").select("id, nome").eq("painel_slug", slug).order("ordem"),
-    db.from("falas").select("texto, palestrante_id").eq("painel_slug", slug).order("ordem"),
+    db.from("falas").select("texto, palestrante_id, status").eq("painel_slug", slug).order("ordem"),
     db.from("fotos").select("id, url, miniatura_url, palestrante_id, status").eq("painel_slug", slug).order("ordem"),
   ]);
   if (!painel.data) notFound();
   const p = painel.data;
-  const situacao = situacaoDoPainel(p, falas.data?.length ?? 0);
+  const todos = [...(falas.data ?? []), ...(fotos.data ?? [])];
+  const situacao = situacaoDoPainel(p, todos.filter((x) => x.status === "rascunho").length, todos.length);
 
   return (
     <div>
@@ -46,10 +47,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
         palestrantes={palestrantes.data ?? []}
       />
 
-      <details className="mt-10 rounded-2xl border border-line bg-card p-4">
-        <summary className="cursor-pointer font-bold">Plano B: enviar fotos direto do computador</summary>
-        <p className="mt-1 text-sm text-muted">Use só se o Google Drive não estiver funcionando.</p>
-        <div className="mt-4">
+      <div className="mt-10 rounded-2xl border border-line bg-card p-4">
           <Fotos
             slug={slug}
             palestrantes={palestrantes.data ?? []}
@@ -61,8 +59,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
               publicada: f.status === "publicado",
             }))}
           />
-        </div>
-      </details>
+      </div>
     </div>
   );
 }

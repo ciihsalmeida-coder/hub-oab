@@ -1,8 +1,13 @@
 export type Situacao = "vazio" | "rascunho" | "publicado";
 
-export function situacaoDoPainel(p: { resumo: string | null; pontos: unknown[]; status_texto: string }, falas: number): Situacao {
-  if (p.status_texto === "publicado") return "publicado";
-  return p.resumo || p.pontos.length || falas ? "rascunho" : "vazio";
+// pendentes = falas, fotos e cortes em rascunho; total = tudo o que existe no painel.
+export function situacaoDoPainel(
+  p: { resumo: string | null; pontos: unknown[]; status_texto: string },
+  pendentes: number,
+  total: number,
+): Situacao {
+  if (p.status_texto === "publicado" && !pendentes) return "publicado";
+  return p.resumo || p.pontos.length || total ? "rascunho" : "vazio";
 }
 
 const estilos: Record<Situacao, [string, string]> = {

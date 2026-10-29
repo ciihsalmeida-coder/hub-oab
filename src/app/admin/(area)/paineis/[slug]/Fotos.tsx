@@ -71,11 +71,20 @@ export function Fotos(props: { slug: string; fotos: Foto[]; palestrantes: { id: 
     <section>
       <h2 className="text-sm font-extrabold tracking-[0.15em] uppercase">Fotos do painel</h2>
       <p className="mt-1 mb-2 text-sm text-muted">
-        Escolha as fotos tratadas. Marque de quem é cada foto para ela entrar no kit do palestrante.
+        Chegam sozinhas da pasta do Drive. Marque de quem é cada foto para ela entrar no kit do palestrante. Elas vão
+        ao ar junto com o botão “Aprovar e publicar”.
       </p>
 
+      {!props.fotos.length && (
+        <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">
+          Nenhuma foto ainda. Coloque as fotos na pasta “Fotos do painel” deste painel no Drive.
+        </p>
+      )}
+
+      <details className="mt-3 rounded-2xl border border-line p-3" open={false}>
+        <summary className="cursor-pointer text-sm font-bold">Plano B: enviar fotos direto do computador</summary>
       <label
-        className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-sky bg-card p-6 text-center ${
+        className={`mt-3 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-sky bg-card p-6 text-center ${
           enviando ? "pointer-events-none opacity-60" : ""
         }`}
       >
@@ -84,6 +93,7 @@ export function Fotos(props: { slug: string; fotos: Foto[]; palestrantes: { id: 
         <span className="text-sm text-muted">Toque para escolher várias de uma vez</span>
         <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => enviar(e.target.files)} />
       </label>
+      </details>
 
       {progresso && (
         <p className="mt-2 text-sm font-semibold">
