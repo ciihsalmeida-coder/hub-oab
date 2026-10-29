@@ -103,6 +103,7 @@ export default async function EditarPainel({
       />
 
       <Cortes
+        slug={slug}
         cortes={cortes.data ?? []}
         palestrantes={palestrantes.data ?? []}
       />
