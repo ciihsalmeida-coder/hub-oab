@@ -7,13 +7,14 @@ const itens = [
   { href: "/admin", rotulo: "Painéis", icone: "🎙️" },
   { href: "/admin/palestrantes", rotulo: "Palestrantes", icone: "🎤" },
   { href: "/admin/cadastros", rotulo: "Cadastros", icone: "👥" },
+  { href: "/admin/resumo-do-dia", rotulo: "Resumo", icone: "🗓️" },
   { href: "/admin/manual", rotulo: "Manual", icone: "📖" },
 ];
 
 export function Menu({ abas = false }: { abas?: boolean }) {
   const caminho = usePathname();
   return (
-    <nav className={abas ? "grid grid-cols-4 gap-1" : "flex gap-1 overflow-x-auto"}>
+    <nav className={abas ? "grid grid-cols-5 gap-0.5" : "flex gap-1 overflow-x-auto"}>
       {itens.map((i) => {
         const ativo = i.href === "/admin" ? caminho === "/admin" || caminho.startsWith("/admin/paineis") : caminho.startsWith(i.href);
         return (

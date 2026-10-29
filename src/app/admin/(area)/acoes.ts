@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { exigirEquipe } from "@/lib/equipe";
+import { gerarResumoDoDia } from "@/lib/resumo-dia";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 type FalaRascunho = { texto: string; palestranteId: string | null; inicioMs?: number | null };
@@ -215,4 +216,20 @@ export async function definirGaleria(url: string) {
   const r = await db.from("paineis").update({ galeria_url: limpo || null }).neq("slug", "");
   if (r.error) throw r.error;
   revalidatePath("/", "layout");
+}
+
+// Resumo do dia para a comissão (IA), e a versão editada pela equipe.
+export async function gerarResumoDia(dia: string, rotulo: string) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const texto = await gerarResumoDoDia(db, dia, rotulo);
+  revalidatePath("/admin/resumo-do-dia");
+  return texto;
+}
+
+export async function salvarResumoDia(dia: string, texto: string) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const r = await db.from("resumos_dia").upsert({ dia, texto });
+  if (r.error) throw r.error;
 }
