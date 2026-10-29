@@ -13,16 +13,18 @@ async function executar(request: NextRequest) {
   if (!(await autorizado(request))) return NextResponse.json({ erro: "Sem permissão." }, { status: 401 });
   const resultado = await processarProximo();
   let cortes: string[] = [];
+  let erroCortes: string | undefined;
   try {
     cortes = await dispararCortes();
   } catch (e) {
+    erroCortes = e instanceof Error ? e.message.slice(0, 300) : String(e);
     console.error("Falha ao acordar o robô de cortes", e);
   }
   if (resultado.painel) {
     revalidatePath(`/admin/paineis/${resultado.painel}`);
     revalidatePath("/admin");
   }
-  return NextResponse.json({ ...resultado, cortes });
+  return NextResponse.json({ ...resultado, cortes, erroCortes, github: Boolean(process.env.GITHUB_TOKEN) });
 }
 
 export const GET = executar;
