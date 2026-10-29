@@ -114,3 +114,24 @@ export async function sair() {
   await db.auth.signOut();
   redirect("/admin/login");
 }
+
+// Reprocessa o áudio mais recente do painel (a transcrição já paga é reaproveitada).
+export async function refazerComIA(slug: string) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const { data: envio } = await db
+    .from("envios")
+    .select("id, assemblyai_id")
+    .eq("painel_slug", slug)
+    .eq("tipo", "audio")
+    .order("criado_em", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!envio) throw new Error("Nenhum áudio deste painel no Drive ainda.");
+  const r = await db
+    .from("envios")
+    .update({ etapa: envio.assemblyai_id ? "transcrevendo" : "recebido", erro: null, bloqueado_ate: null })
+    .eq("id", envio.id);
+  if (r.error) throw r.error;
+  atualizarSite(slug);
+}

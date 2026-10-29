@@ -4,6 +4,7 @@ import { exigirEquipe } from "@/lib/equipe";
 import { situacaoDoPainel, Status } from "../../Status";
 import { Editor } from "./Editor";
 import { Fotos } from "./Fotos";
+import { Refazer } from "./Refazer";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
       <h1 className="mt-1 text-2xl leading-tight font-extrabold">{p.titulo}</h1>
 
       <StatusIA envio={envios.data?.[0]} />
+      {envios.data?.[0] && ["pronto", "erro"].includes(envios.data[0].etapa) && <Refazer slug={slug} />}
 
       <Editor
         slug={slug}
