@@ -48,6 +48,22 @@ async function reservarEnvio(): Promise<Envio | null> {
   return null;
 }
 
+// Um painel é transcrito uma vez só: vale o áudio mais recente; vídeo só se não houver áudio.
+async function motivoParaIgnorar(envio: Envio) {
+  const { data: outros } = await supabaseAdmin()
+    .from("envios")
+    .select("id, tipo, criado_em")
+    .eq("painel_slug", envio.painel_slug)
+    .neq("id", envio.id)
+    .neq("etapa", "ignorado")
+    .order("criado_em", { ascending: false });
+  const { data: este } = await supabaseAdmin().from("envios").select("criado_em").eq("id", envio.id).single();
+  const audios = (outros ?? []).filter((o) => o.tipo === "audio");
+  if (envio.tipo === "video" && audios.length) return "Vídeo guardado para os cortes; a transcrição usa o áudio do painel.";
+  if (envio.tipo === "audio" && audios.some((o) => o.criado_em > (este?.criado_em ?? ""))) return "Há um áudio mais novo deste painel; ele é o que vale.";
+  return null;
+}
+
 async function mudarEtapa(id: string, campos: Record<string, unknown>) {
   await supabaseAdmin()
     .from("envios")
@@ -61,6 +77,11 @@ export async function processarProximo(): Promise<{ envio?: string; etapa?: stri
   if (!envio) return {};
   try {
     if (envio.etapa === "recebido") {
+      const motivo = await motivoParaIgnorar(envio);
+      if (motivo) {
+        await mudarEtapa(envio.id, { etapa: "ignorado", erro: motivo });
+        return { envio: envio.id, etapa: "ignorado" };
+      }
       const api = clienteDrive();
       const meta = await api.files.get({ fileId: envio.origem_drive_id!, fields: "size" });
       const mb = Number(meta.data.size ?? 0) / 1024 / 1024;
@@ -83,8 +104,10 @@ export async function processarProximo(): Promise<{ envio?: string; etapa?: stri
         await mudarEtapa(envio.id, {});
         return { envio: envio.id, etapa: "transcrevendo" };
       }
-      const falas = (t.utterances ?? []).map((u: { speaker: string; start: number; end: number; text: string }) => ({
-        falante: u.speaker,
+      // Frase a frase (e não por bloco de falante): dá tempos precisos para falas e cortes.
+      const { sentences } = await assembly(`/transcript/${envio.assemblyai_id}/sentences`);
+      const falas = (sentences ?? []).map((u: { speaker: string | null; start: number; end: number; text: string }) => ({
+        falante: u.speaker ?? "?",
         inicio: u.start,
         fim: u.end,
         texto: u.text,

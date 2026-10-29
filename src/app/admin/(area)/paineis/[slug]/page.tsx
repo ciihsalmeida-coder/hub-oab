@@ -15,7 +15,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
     db.from("palestrantes").select("id, nome").eq("painel_slug", slug).order("ordem"),
     db.from("falas").select("texto, palestrante_id, status").eq("painel_slug", slug).order("ordem"),
     db.from("fotos").select("id, url, miniatura_url, palestrante_id, status").eq("painel_slug", slug).order("ordem"),
-    db.from("envios").select("nome, etapa, erro, atualizado_em").eq("painel_slug", slug).order("criado_em", { ascending: false }).limit(1),
+    db.from("envios").select("nome, etapa, erro, atualizado_em").eq("painel_slug", slug).neq("etapa", "ignorado").order("criado_em", { ascending: false }).limit(1),
     db.from("cortes").select("id, titulo, inicio_ms, fim_ms, legenda_sugerida, video_url, palestrante_id").eq("painel_slug", slug).order("ordem"),
   ]);
   if (!painel.data) notFound();
@@ -76,6 +76,7 @@ const etapas: Record<string, string> = {
   escrevendo: "✍️ A IA está escrevendo o resumo, as falas e os cortes…",
   pronto: "✅ A IA terminou. Revise abaixo e aprove.",
   erro: "⚠️ Algo deu errado no processamento.",
+  ignorado: "ℹ️ Arquivo guardado, mas não transcrito.",
 };
 
 function StatusIA({ envio }: { envio?: { nome: string | null; etapa: string; erro: string | null } }) {
