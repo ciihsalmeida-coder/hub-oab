@@ -1,10 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { definirFotosAuto } from "./acoes";
 
 // Cartão do Google Drive na área de controle.
-export function Drive(props: { configurado: boolean; pastasCriadas: boolean; erros: { nome: string | null; erro: string }[] }) {
+export function Drive(props: {
+  configurado: boolean;
+  pastasCriadas: boolean;
+  fotosAuto: boolean;
+  erros: { nome: string | null; erro: string }[];
+}) {
+  const [auto, setAuto] = useState(props.fotosAuto);
+  const [, iniciar] = useTransition();
   const router = useRouter();
   const [mensagem, setMensagem] = useState("");
   const [ocupado, setOcupado] = useState(false);
@@ -67,6 +75,23 @@ export function Drive(props: { configurado: boolean; pastasCriadas: boolean; err
             Buscar agora
           </button>
         </div>
+      )}
+      {props.configurado && (
+        <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl bg-fog/60 p-3">
+          <input
+            type="checkbox"
+            checked={auto}
+            onChange={(e) => {
+              setAuto(e.target.checked);
+              iniciar(() => definirFotosAuto(e.target.checked));
+            }}
+            className="h-5 w-5 accent-sky"
+          />
+          <span className="text-sm">
+            <strong>✨ Modo automático das fotos</strong>
+            <span className="block text-muted">Relight, enhance e colorgrade suaves em toda foto nova que chega do Drive.</span>
+          </span>
+        </label>
       )}
       {mensagem && <p className="mt-2 text-sm font-semibold">{mensagem}</p>}
       {props.erros.length > 0 && (

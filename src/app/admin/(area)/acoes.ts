@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { exigirEquipe } from "@/lib/equipe";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 type FalaRascunho = { texto: string; palestranteId: string | null };
 
@@ -188,4 +189,13 @@ export async function marcarPalestranteDoCorte(slug: string, corteId: string, pa
   const r = await db.from("cortes").update({ palestrante_id: palestranteId, status: "rascunho" }).eq("id", corteId);
   if (r.error) throw r.error;
   atualizarSite(slug);
+}
+
+// Liga/desliga o tratamento automático das fotos que chegam do Drive.
+export async function definirFotosAuto(ligado: boolean) {
+  const { membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const r = await supabaseAdmin().from("segredos").upsert({ chave: "fotos_auto", valor: ligado ? "sim" : "nao" });
+  if (r.error) throw r.error;
+  revalidatePath("/admin");
 }

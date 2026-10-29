@@ -1,7 +1,7 @@
 import "server-only";
 import { drive, type drive_v3 } from "@googleapis/drive";
 import { GoogleAuth } from "google-auth-library";
-import sharp from "sharp";
+import { tratarFoto } from "@/lib/fotos";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 // Pasta principal no Drive da Cilene, compartilhada com o robô (conta de serviço).
@@ -157,11 +157,8 @@ type Pasta = { painel_slug: string; tipo: string; palestrante_id: string | null 
 async function copiarFoto(api: drive_v3.Drive, arquivo: drive_v3.Schema$File, pasta: Pasta) {
   const db = supabaseAdmin();
   const original = await baixar(api, arquivo.id!);
-  const base = sharp(original, { failOn: "none" }).rotate();
-  const [grande, mini] = await Promise.all([
-    base.clone().resize(2400, 2400, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer(),
-    base.clone().resize(640, 640, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 75 }).toBuffer(),
-  ]);
+  const { data: ajuste } = await db.from("segredos").select("valor").eq("chave", "fotos_auto").maybeSingle();
+  const { grande, mini } = await tratarFoto(original, ajuste?.valor !== "nao");
   const caminho = `${pasta.painel_slug}/drive-${arquivo.id}.jpg`;
   const caminhoMini = `${pasta.painel_slug}/drive-${arquivo.id}-mini.jpg`;
   const opcoes = { contentType: "image/jpeg", cacheControl: "31536000", upsert: true };

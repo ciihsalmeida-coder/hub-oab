@@ -2,6 +2,7 @@ import Link from "next/link";
 import { dias } from "@/data/programacao";
 import { driveConfigurado } from "@/lib/drive";
 import { exigirEquipe } from "@/lib/equipe";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { Drive } from "./Drive";
 import { situacaoDoPainel, Status } from "./Status";
 import { type Etapa, Etapas, Numero } from "./ui";
@@ -31,6 +32,7 @@ export default async function Admin() {
     db.from("pastas_drive").select("drive_id", { count: "exact", head: true }),
     db.from("drive_erros").select("nome, erro").gte("tentativas", 1),
   ]);
+  const { data: fotosAuto } = await supabaseAdmin().from("segredos").select("valor").eq("chave", "fotos_auto").maybeSingle();
 
   const doPainel = <T extends Item>(lista: T[] | null, slug: string) => (lista ?? []).filter((x) => x.painel_slug === slug);
   const lista = paineis.data ?? [];
@@ -84,7 +86,12 @@ export default async function Admin() {
         <Numero icone="👥" valor={cadastros.count ?? 0} rotulo="pessoas cadastradas" />
       </div>
 
-      <Drive configurado={driveConfigurado()} pastasCriadas={(pastas.count ?? 0) > 0} erros={erros.data ?? []} />
+      <Drive
+        configurado={driveConfigurado()}
+        pastasCriadas={(pastas.count ?? 0) > 0}
+        fotosAuto={fotosAuto?.valor !== "nao"}
+        erros={erros.data ?? []}
+      />
 
       {dias.map((dia) => (
         <section key={dia.data}>
