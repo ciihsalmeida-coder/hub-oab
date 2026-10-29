@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { registrar } from "@/lib/metricas";
 
 type Fala = { id: string; texto: string; nome: string | null; cargo: string | null; foto: string | null };
 type Dados = {
@@ -41,6 +42,7 @@ export function Mural({ qr, site }: { qr: string; site: string }) {
         .then(setDados)
         .catch(() => {});
     carregar();
+    registrar("abriu_mural");
     const t = setInterval(carregar, 60_000);
     return () => clearInterval(t);
   }, []);

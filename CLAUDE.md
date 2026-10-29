@@ -75,4 +75,7 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
    Testado ponta a ponta em 29/10 (disparo automático pelo site OK). Botão "Refazer cortes" no editor.
 5. ✅ Kits (`/kit/<slug>-<token>`, só aprovado) + aba /admin/palestrantes (editar carômetro,
    WhatsApp com 55, enviar kit) + cadastro do público.
-6. Teste de carga antes de 08/11.
+6. ✅ Manual do dia + plano B (/admin/manual), mural do telão (/mural), resumo do dia (/admin/resumo-do-dia),
+   QR codes e "Agora no palco" (/admin/materiais), métricas anônimas (tabela `eventos`, view `metricas`,
+   /admin/metricas; aviso em /privacidade).
+7. Teste de carga antes de 08/11.

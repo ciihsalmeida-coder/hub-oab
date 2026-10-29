@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { registrar } from "@/lib/metricas";
 
 export function Copiar({ texto, rotulo = "Copiar texto" }: { texto: string; rotulo?: string }) {
   const [ok, setOk] = useState(false);
@@ -20,10 +21,11 @@ export function Copiar({ texto, rotulo = "Copiar texto" }: { texto: string; rotu
   );
 }
 
-export function Compartilhar({ titulo }: { titulo: string }) {
+export function Compartilhar({ titulo, alvo }: { titulo: string; alvo?: string }) {
   return (
     <button
       onClick={() => {
+        registrar("compartilhou", alvo);
         const url = window.location.href;
         if (navigator.share) navigator.share({ title: titulo, url }).catch(() => {});
         else navigator.clipboard?.writeText(url);

@@ -97,6 +97,18 @@ export default async function Admin() {
       <Galeria atual={lista[0]?.galeria_url ?? ""} />
 
       <Link
+        href="/admin/metricas"
+        className="flex items-center gap-3 rounded-[28px] border border-white/12 bg-white/[0.07] p-5 backdrop-blur-xl"
+      >
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10 text-xl ring-1 ring-white/15">📊</span>
+        <span className="flex-1">
+          <span className="block text-lg font-extrabold">Métricas do hub</span>
+          <span className="block text-sm text-muted">Visitas, kits abertos e downloads</span>
+        </span>
+        <span aria-hidden>→</span>
+      </Link>
+
+      <Link
         href="/admin/materiais"
         className="flex items-center gap-3 rounded-[28px] border border-white/12 bg-gradient-to-r from-wine/40 to-sea/40 p-5 backdrop-blur-xl"
       >

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Copiar } from "@/components/Botoes";
 import { Assinatura, FaixaLocal } from "@/components/Marca";
+import { LinkContado, Rastrear } from "@/components/Rastrear";
 import { buscarKit } from "@/lib/kit";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ export default async function Kit({ params }: { params: Promise<{ codigo: string
 
   return (
     <main>
+      <Rastrear tipo="visita_kit" alvo={p.slug} />
       <header className="ceu-mar px-4 pt-6 pb-8">
         <div className="mx-auto max-w-3xl">
           <Assinatura />
@@ -46,13 +48,15 @@ export default async function Kit({ params }: { params: Promise<{ codigo: string
                   <figure key={f.id} className="w-64 shrink-0 snap-start">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={src} alt={`Card com a frase: ${f.texto}`} className="aspect-[4/5] w-full rounded-2xl shadow-md" />
-                    <a
+                    <LinkContado
+                      tipo="baixou_card"
+                      alvo={p.slug}
                       href={src}
                       download={`card-congresso-oab-${i + 1}.png`}
                       className="mt-2 block rounded-full bg-sky py-2 text-center text-sm font-extrabold text-navy uppercase"
                     >
                       ⬇ Baixar card
-                    </a>
+                    </LinkContado>
                   </figure>
                 );
               })}
@@ -94,9 +98,9 @@ export default async function Kit({ params }: { params: Promise<{ codigo: string
                   <video src={c.video_url!} controls playsInline preload="none" className="aspect-[9/16] w-full bg-navy object-cover" />
                   <figcaption className="p-3">
                     <p className="leading-tight font-bold">{c.titulo}</p>
-                    <a href={c.video_url!} download className="mt-3 block rounded-full bg-sky py-2 text-center text-sm font-extrabold text-navy uppercase">
+                    <LinkContado tipo="baixou_video" alvo={p.slug} href={c.video_url!} download className="mt-3 block rounded-full bg-sky py-2 text-center text-sm font-extrabold text-navy uppercase">
                       ⬇ Baixar vídeo
-                    </a>
+                    </LinkContado>
                   </figcaption>
                 </figure>
               ))}
@@ -108,10 +112,10 @@ export default async function Kit({ params }: { params: Promise<{ codigo: string
           <Secao titulo="Suas fotos" subtitulo="Toque numa foto para abrir em alta resolução e salvar.">
             <div className="grid grid-cols-3 gap-2">
               {kit.fotos.map((f) => (
-                <a key={f.id} href={f.url} target="_blank" rel="noreferrer" download>
+                <LinkContado key={f.id} tipo="baixou_foto" alvo={p.slug} href={f.url} target="_blank" rel="noreferrer" download>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={f.miniatura_url ?? f.url} alt="" loading="lazy" className="aspect-[4/5] w-full rounded-xl object-cover" />
-                </a>
+                </LinkContado>
               ))}
             </div>
           </Secao>

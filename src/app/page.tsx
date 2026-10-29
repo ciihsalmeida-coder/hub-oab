@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AgoraNoPalco } from "@/components/AgoraNoPalco";
+import { Rastrear } from "@/components/Rastrear";
 import { GaleriaBotao } from "@/components/GaleriaBotao";
 import { Assinatura, FaixaLocal, TituloCongresso } from "@/components/Marca";
 import { dias } from "@/data/programacao";
@@ -38,6 +39,7 @@ export default async function Home() {
           </div>
         </div>
       </header>
+      <Rastrear tipo="visita_home" />
       <AgoraNoPalco />
       <FaixaLocal />
 

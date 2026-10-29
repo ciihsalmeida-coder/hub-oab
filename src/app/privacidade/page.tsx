@@ -26,6 +26,10 @@ export default function Privacidade() {
           Somente se você preencher o formulário opcional: nome, e-mail e, se quiser, WhatsApp. O conteúdo do site é
           aberto e não exige cadastro.
         </Bloco>
+        <Bloco titulo="Contagem de acessos">
+          O site conta, de forma anônima, quantas vezes as páginas são abertas e os materiais baixados (sem nome, e-mail,
+          endereço IP ou qualquer dado que identifique você), para medir o alcance do congresso.
+        </Bloco>
         <Bloco titulo="Para que usamos">
           Para enviar a você os resumos, vídeos e materiais do XIV Congresso Nacional de Direito Marítimo, Portuário e
           Aduaneiro. A base legal é o seu consentimento (art. 7º, I, da LGPD). Não vendemos nem compartilhamos seus

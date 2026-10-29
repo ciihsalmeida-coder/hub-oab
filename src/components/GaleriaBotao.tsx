@@ -1,8 +1,10 @@
+import { LinkContado } from "@/components/Rastrear";
 import { congresso } from "@/data/programacao";
 
 export function GaleriaBotao({ url = congresso.galeriaUrl }: { url?: string }) {
   return (
-    <a
+    <LinkContado
+      tipo="abriu_galeria"
       href={url || undefined}
       aria-disabled={!url}
       className={`flex items-center justify-between gap-3 rounded-2xl px-5 py-4 text-left shadow-lg ${
@@ -16,6 +18,6 @@ export function GaleriaBotao({ url = congresso.galeriaUrl }: { url?: string }) {
         </span>
       </span>
       <span className="text-2xl">→</span>
-    </a>
+    </LinkContado>
   );
 }

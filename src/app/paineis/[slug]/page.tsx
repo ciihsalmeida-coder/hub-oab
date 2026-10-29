@@ -4,6 +4,7 @@ import { Cadastro } from "@/components/Cadastro";
 import { GaleriaBotao } from "@/components/GaleriaBotao";
 import { Assinatura, FaixaLocal, Voltar } from "@/components/Marca";
 import { Palestrante } from "@/components/Palestrante";
+import { LinkContado, Rastrear } from "@/components/Rastrear";
 import { congresso, dias, paineis } from "@/data/programacao";
 import { buscarConteudo } from "@/lib/dados";
 
@@ -28,6 +29,7 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
 
   return (
     <main>
+      <Rastrear tipo="visita_painel" alvo={painel.slug} />
       <header className="ceu-mar px-4 pt-6 pb-8">
         <div className="mx-auto max-w-3xl">
           <Voltar />
@@ -91,7 +93,7 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
                     <p className="leading-tight font-bold">{c.titulo}</p>
                     {c.palestranteId && <p className="text-sm text-muted">{nomePor.get(c.palestranteId)?.nome}</p>}
                     <div className="mt-3">
-                      <Compartilhar titulo={c.titulo} />
+                      <Compartilhar titulo={c.titulo} alvo={painel.slug} />
                     </div>
                   </figcaption>
                 </figure>
@@ -124,10 +126,10 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
           {painel.fotos.length ? (
             <div className="grid grid-cols-3 gap-2">
               {painel.fotos.map((f) => (
-                <a key={f.id} href={f.url} target="_blank" rel="noreferrer" download>
+                <LinkContado key={f.id} tipo="baixou_foto" alvo={painel.slug} href={f.url} target="_blank" rel="noreferrer" download>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={f.miniatura ?? f.url} alt="" loading="lazy" className="aspect-[4/5] w-full rounded-xl object-cover" />
-                </a>
+                </LinkContado>
               ))}
             </div>
           ) : (
