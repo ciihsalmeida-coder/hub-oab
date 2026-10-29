@@ -1,0 +1,34 @@
+# Robô de cortes: acordado pelo site quando um painel tem vídeo e trechos escolhidos pela IA.
+name: Cortes de vídeo
+
+on:
+  workflow_dispatch:
+    inputs:
+      painel:
+        description: "Slug do painel (ex.: painel-1)"
+        required: true
+
+concurrency:
+  group: cortes-${{ inputs.painel }}
+  cancel-in-progress: false
+
+jobs:
+  cortar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar ffmpeg e dependências
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+          pip install --quiet numpy google-auth requests
+      - name: Cortar
+        env:
+          SUPABASE_URL: https://fznihnlsnshbkfkkisvg.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        run: python scripts/cortes/cortar.py "${{ inputs.painel }}"
