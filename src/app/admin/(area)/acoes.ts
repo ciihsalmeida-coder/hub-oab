@@ -180,3 +180,12 @@ export async function refazerCortes(slug: string) {
   if (r2.error) throw r2.error;
   atualizarSite(slug);
 }
+
+// Liga o corte ao palestrante que aparece nele (é isso que leva o vídeo para o kit).
+export async function marcarPalestranteDoCorte(slug: string, corteId: string, palestranteId: string | null) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const r = await db.from("cortes").update({ palestrante_id: palestranteId, status: "rascunho" }).eq("id", corteId);
+  if (r.error) throw r.error;
+  atualizarSite(slug);
+}

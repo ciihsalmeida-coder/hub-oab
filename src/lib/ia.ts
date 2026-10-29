@@ -260,7 +260,9 @@ ${transcricao}
   const resultado: Resultado = Resultado.parse(JSON.parse(texto));
 
   const idPorNome = new Map((palestrantes ?? []).map((p) => [p.nome, p.id]));
-  const id = (nome: string | null) => (nome ? idPorNome.get(nome) ?? null : null);
+  // Painel com um único palestrante (ex.: palestra magna): tudo é dele.
+  const unico = palestrantes?.length === 1 ? palestrantes[0].id : null;
+  const id = (nome: string | null) => (nome ? idPorNome.get(nome) ?? unico : unico);
 
   const r1 = await db
     .from("paineis")

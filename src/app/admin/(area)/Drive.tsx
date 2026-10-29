@@ -25,9 +25,10 @@ export function Drive(props: { configurado: boolean; pastasCriadas: boolean; err
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-line bg-card p-4">
+    <section className="rounded-3xl border border-line/70 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="font-extrabold">📁 Google Drive</h2>
+        <span className="grid h-10 w-10 place-items-center rounded-2xl bg-fog text-xl">📁</span>
+        <h2 className="text-lg font-extrabold">Google Drive</h2>
         <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${props.configurado ? "bg-green-100 text-green-900" : "bg-line text-muted"}`}>
           {props.configurado ? "conectado" : "aguardando configuração"}
         </span>

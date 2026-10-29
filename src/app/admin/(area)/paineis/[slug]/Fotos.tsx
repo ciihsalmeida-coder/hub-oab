@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { supabaseNavegador } from "@/lib/supabase/navegador";
 import { fotosEnviadas, marcarPalestranteDaFoto, removerFoto } from "../../acoes";
+import { TituloCartao } from "../../ui";
 
 type Foto = { id: string; url: string; miniatura: string | null; palestranteId: string | null; publicada: boolean };
 
@@ -69,11 +70,11 @@ export function Fotos(props: { slug: string; fotos: Foto[]; palestrantes: { id: 
 
   return (
     <section>
-      <h2 className="text-sm font-extrabold tracking-[0.15em] uppercase">Fotos do painel</h2>
-      <p className="mt-1 mb-2 text-sm text-muted">
-        Chegam sozinhas da pasta do Drive. Marque de quem é cada foto para ela entrar no kit do palestrante. Elas vão
-        ao ar junto com o botão “Aprovar e publicar”.
-      </p>
+      <TituloCartao
+        icone="📸"
+        titulo="Fotos do painel"
+        ajuda="Chegam sozinhas da pasta do Drive. Marque de quem é cada foto para ela entrar no kit do palestrante."
+      />
 
       {!props.fotos.length && (
         <p className="rounded-2xl border border-dashed border-line p-4 text-sm text-muted">
