@@ -29,6 +29,7 @@ export default async function AreaLayout({ children }: { children: React.ReactNo
           </Link>
           <nav className="flex gap-3 text-white/80">
             <Link href="/admin">Painéis</Link>
+            <Link href="/admin/palestrantes">Palestrantes</Link>
             <Link href="/admin/cadastros">Cadastros</Link>
           </nav>
           <span className="ml-auto hidden text-white/70 sm:inline">

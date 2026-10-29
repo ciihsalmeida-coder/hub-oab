@@ -135,3 +135,33 @@ export async function refazerComIA(slug: string) {
   if (r.error) throw r.error;
   atualizarSite(slug);
 }
+
+// Corrige dados do carômetro e guarda o WhatsApp do palestrante.
+export async function salvarPalestrante(id: string, form: FormData) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  // Guarda no formato do wa.me: com 55 na frente quando vier só DDD + número.
+  let whatsapp: string | null = String(form.get("whatsapp") || "").replace(/\D/g, "") || null;
+  if (whatsapp && whatsapp.length <= 11) whatsapp = `55${whatsapp}`;
+  const r = await db
+    .from("palestrantes")
+    .update({
+      nome: String(form.get("nome")).trim(),
+      cargo: String(form.get("cargo")).trim(),
+      whatsapp,
+      pendente: form.get("resolvido") === "on" ? null : undefined,
+    })
+    .eq("id", id)
+    .select("painel_slug")
+    .single();
+  if (r.error) throw r.error;
+  revalidatePath("/admin/palestrantes");
+  revalidatePath(`/paineis/${r.data.painel_slug}`);
+}
+
+export async function marcarKitEnviado(palestranteId: string) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  await db.from("kits").update({ enviado_em: new Date().toISOString() }).eq("palestrante_id", palestranteId);
+  revalidatePath("/admin/palestrantes");
+}
