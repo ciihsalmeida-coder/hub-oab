@@ -60,5 +60,6 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
    (claude-opus-5-5, structured output, fallbacks default) → rascunho. `/api/ia/processar` no cron.
    Chaves na Vercel: ASSEMBLYAI_API_KEY, ANTHROPIC_API_KEY. Ainda não testado com áudio real.
 4. Cortes automáticos (ffmpeg pelos tempos) + Opus Clip opcional.
-5. Kits dos palestrantes + cadastro do público.
+5. ✅ Kits (`/kit/<slug>-<token>`, só aprovado) + aba /admin/palestrantes (editar carômetro,
+   WhatsApp com 55, enviar kit) + cadastro do público.
 6. Teste de carga antes de 08/11.
