@@ -36,12 +36,17 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 - Identidade visual: cartaz oficial (névoa sobre o mar, marinho, azul-claro, vinho,
   Montserrat). Logo da OAB ainda é imitação em texto — trocar pelos arquivos oficiais.
 
+## Equipe (tabela `equipe`)
+- Cilene (cilene@mzen.com.br) está como `aprovador` SÓ PARA TESTES. Antes do evento,
+  voltar para `editor` e cadastrar o aprovador indicado pela OAB.
+- Painel 1 tem conteúdo "[TESTE]" para Cilene testar o fluxo. Limpar antes do evento.
+
 ## Páginas de demonstração
 `/exemplo` (público) e `/exemplo/palestrante` — conteúdo fictício. APAGAR antes do evento.
 
 ## Próximos passos
-1. Ligar Supabase ao site (variáveis na Vercel) e criar tabelas.
-2. Área `/admin` com login, rascunho/aprovação.
+1. ✅ Supabase ligado (variáveis na Vercel), tabelas e regras de acesso criadas.
+2. ✅ Área `/admin` com login, rascunho/aprovação e cadastros (CSV).
 3. Pipeline: upload → AssemblyAI → Claude → página como rascunho.
 4. Cortes automáticos (ffmpeg pelos tempos) + Opus Clip opcional.
 5. Kits dos palestrantes + cadastro do público.
