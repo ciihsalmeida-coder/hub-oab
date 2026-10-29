@@ -50,7 +50,7 @@ export function Fotos(props: { slug: string; fotos: Foto[]; palestrantes: { id: 
           if (r1.error || r2.error) throw r1.error ?? r2.error;
           const url = db.storage.from("fotos").getPublicUrl(caminho).data.publicUrl;
           const miniatura = db.storage.from("fotos").getPublicUrl(caminhoMini).data.publicUrl;
-          const r3 = await db.from("fotos").insert({ id, painel_slug: props.slug, url, miniatura_url: miniatura, ordem: Date.now() % 2147483647 });
+          const r3 = await db.from("fotos").insert({ id, painel_slug: props.slug, url, miniatura_url: miniatura, ordem: Math.floor(Date.now() / 1000) });
           if (r3.error) throw r3.error;
           feitas++;
         } catch (e) {

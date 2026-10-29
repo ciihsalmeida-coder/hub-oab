@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { dias } from "@/data/programacao";
+import { driveConfigurado } from "@/lib/drive";
 import { exigirEquipe } from "@/lib/equipe";
+import { Drive } from "./Drive";
 import { situacaoDoPainel, Status } from "./Status";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +16,10 @@ export default async function Admin() {
     db.from("fotos").select("painel_slug, status"),
     db.from("cadastros").select("id", { count: "exact", head: true }),
   ]);
+  const [pastas, erros] = await Promise.all([
+    db.from("pastas_drive").select("drive_id", { count: "exact", head: true }),
+    db.from("drive_erros").select("nome, erro").gte("tentativas", 1),
+  ]);
   const conta = (lista: { painel_slug: string; status?: string }[] | null, slug: string, status?: string) =>
     (lista ?? []).filter((x) => x.painel_slug === slug && (!status || x.status === status)).length;
 
@@ -23,6 +29,8 @@ export default async function Admin() {
       <p className="mt-1 text-sm text-muted">
         Toque num painel para revisar o que a IA preparou. {cadastros.count ?? 0} pessoa(s) cadastrada(s).
       </p>
+
+      <Drive configurado={driveConfigurado()} pastasCriadas={(pastas.count ?? 0) > 0} erros={erros.data ?? []} />
 
       {dias.map((dia) => (
         <section key={dia.data} className="mt-6">
