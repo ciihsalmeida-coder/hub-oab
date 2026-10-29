@@ -42,6 +42,14 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
   voltar para `editor` e cadastrar o aprovador indicado pela OAB.
 - Painel 1 tem conteúdo "[TESTE]" para Cilene testar o fluxo. Limpar antes do evento.
 
+## Google Drive
+- Pasta raiz: "Congresso OAB 2026 · Fotos e cortes do hub" (id 1S4UKRokkKPsYD6gZudhxVM292-PgZUu0),
+  no Drive de ciihs.almeida@gmail.com, compartilhada como editor com o robô
+  hub-oab-drive@buoyant-climate-513113-q0.iam.gserviceaccount.com (projeto "My First Project").
+- Chave do robô na Vercel: GOOGLE_SERVICE_ACCOUNT_JSON (Secret).
+- pg_cron "sincronizar-drive" chama /api/drive/sincronizar a cada 2 min (token em public.segredos).
+- Vídeos acima de 45 MB falham no plano gratuito do Supabase (limite 50 MB/arquivo).
+
 ## Páginas de demonstração
 `/exemplo` (público) e `/exemplo/palestrante` — conteúdo fictício. APAGAR antes do evento.
 
