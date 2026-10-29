@@ -62,7 +62,8 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 4. ✅ Robô de cortes: `.github/workflows/cortes.yml` + `scripts/cortes/cortar.py` (alinha áudio da mesa ×
    vídeo por correlação de energia, corta 9:16 com legenda ASS, sobe em storage `cortes`). Disparado por
    `/api/ia/processar` via GITHUB_TOKEN (Vercel). Secrets no GitHub: SUPABASE_SECRET_KEY,
-   GOOGLE_SERVICE_ACCOUNT_JSON. Vídeo do painel = envio tipo video mais recente (arquivo único).
+   GOOGLE_SERVICE_ACCOUNT_JSON. Vídeo = o de mesmo nome do áudio (senão o mais recente).
+   Testado ponta a ponta em 29/10 (disparo automático pelo site OK). Botão "Refazer cortes" no editor.
 5. ✅ Kits (`/kit/<slug>-<token>`, só aprovado) + aba /admin/palestrantes (editar carômetro,
    WhatsApp com 55, enviar kit) + cadastro do público.
 6. Teste de carga antes de 08/11.
