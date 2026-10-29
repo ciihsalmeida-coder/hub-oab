@@ -96,6 +96,18 @@ export default async function Admin() {
 
       <Galeria atual={lista[0]?.galeria_url ?? ""} />
 
+      <Link
+        href="/admin/materiais"
+        className="flex items-center gap-3 rounded-[28px] border border-white/12 bg-gradient-to-r from-wine/40 to-sea/40 p-5 backdrop-blur-xl"
+      >
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/10 text-xl ring-1 ring-white/15">📺</span>
+        <span className="flex-1">
+          <span className="block text-lg font-extrabold">Mural do telão e QR codes</span>
+          <span className="block text-sm text-muted">Materiais prontos para o evento</span>
+        </span>
+        <span aria-hidden>→</span>
+      </Link>
+
       {dias.map((dia) => (
         <section key={dia.data}>
           <h2 className="mb-2 text-xs font-extrabold tracking-[0.2em] text-sky uppercase">{dia.rotulo}</h2>

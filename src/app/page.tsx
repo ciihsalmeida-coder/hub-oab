@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AgoraNoPalco } from "@/components/AgoraNoPalco";
 import { GaleriaBotao } from "@/components/GaleriaBotao";
 import { Assinatura, FaixaLocal, TituloCongresso } from "@/components/Marca";
 import { dias } from "@/data/programacao";
@@ -37,6 +38,7 @@ export default async function Home() {
           </div>
         </div>
       </header>
+      <AgoraNoPalco />
       <FaixaLocal />
 
       <div className="mx-auto max-w-3xl px-4">
