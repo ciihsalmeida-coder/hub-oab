@@ -56,7 +56,9 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 ## Próximos passos
 1. ✅ Supabase ligado (variáveis na Vercel), tabelas e regras de acesso criadas.
 2. ✅ Área `/admin` com login, rascunho/aprovação e cadastros (CSV).
-3. Pipeline: upload → AssemblyAI → Claude → página como rascunho.
+3. ✅ Pipeline: áudio na pasta "Áudio e vídeo do painel" (Drive) → envios → AssemblyAI → Claude
+   (claude-opus-5-5, structured output, fallbacks default) → rascunho. `/api/ia/processar` no cron.
+   Chaves na Vercel: ASSEMBLYAI_API_KEY, ANTHROPIC_API_KEY. Ainda não testado com áudio real.
 4. Cortes automáticos (ffmpeg pelos tempos) + Opus Clip opcional.
 5. Kits dos palestrantes + cadastro do público.
 6. Teste de carga antes de 08/11.
