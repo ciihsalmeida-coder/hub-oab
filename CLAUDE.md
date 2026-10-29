@@ -59,7 +59,10 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 3. ✅ Pipeline: áudio na pasta "Áudio e vídeo do painel" (Drive) → envios → AssemblyAI → Claude
    (claude-opus-5-5, structured output, fallbacks default) → rascunho. `/api/ia/processar` no cron.
    Chaves na Vercel: ASSEMBLYAI_API_KEY, ANTHROPIC_API_KEY. Ainda não testado com áudio real.
-4. Cortes automáticos (ffmpeg pelos tempos) + Opus Clip opcional.
+4. ✅ Robô de cortes: `.github/workflows/cortes.yml` + `scripts/cortes/cortar.py` (alinha áudio da mesa ×
+   vídeo por correlação de energia, corta 9:16 com legenda ASS, sobe em storage `cortes`). Disparado por
+   `/api/ia/processar` via GITHUB_TOKEN (Vercel). Secrets no GitHub: SUPABASE_SECRET_KEY,
+   GOOGLE_SERVICE_ACCOUNT_JSON. Vídeo do painel = envio tipo video mais recente (arquivo único).
 5. ✅ Kits (`/kit/<slug>-<token>`, só aprovado) + aba /admin/palestrantes (editar carômetro,
    WhatsApp com 55, enviar kit) + cadastro do público.
 6. Teste de carga antes de 08/11.
