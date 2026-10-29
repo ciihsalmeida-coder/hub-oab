@@ -95,6 +95,7 @@ export async function buscarConteudo(slug: string): Promise<ConteudoPainel | nul
         .from("cortes")
         .select("id, titulo, video_url, capa_url, legenda_sugerida, palestrante_id")
         .eq("painel_slug", slug)
+        .not("video_url", "is", null)
         .order("ordem"),
       db.from("fotos").select("id, url, miniatura_url, palestrante_id").eq("painel_slug", slug).order("ordem"),
     ]);

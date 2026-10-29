@@ -45,15 +45,13 @@ export function Drive(props: { configurado: boolean; pastasCriadas: boolean; err
           >
             Abrir pasta ↗
           </a>
-          {!props.pastasCriadas && (
             <button
               disabled={ocupado}
               onClick={() => chamar("/api/drive/preparar", (r) => `✅ ${r.pastas} pastas prontas no Drive.`)}
               className="rounded-full bg-navy px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
             >
-              Criar pastas no Drive
+              {props.pastasCriadas ? "Atualizar pastas" : "Criar pastas no Drive"}
             </button>
-          )}
           <button
             disabled={ocupado}
             onClick={() =>

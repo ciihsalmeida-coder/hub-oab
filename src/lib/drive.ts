@@ -13,7 +13,7 @@ export function driveConfigurado() {
   return Boolean(process.env.GOOGLE_SERVICE_ACCOUNT_JSON && process.env.SUPABASE_SECRET_KEY);
 }
 
-function cliente() {
+export function cliente() {
   const credenciais = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON ?? "{}");
   const auth = new GoogleAuth({ credentials: credenciais, scopes: ["https://www.googleapis.com/auth/drive"] });
   return drive({ version: "v3", auth });
@@ -45,11 +45,13 @@ export async function prepararPastas() {
     const fotos = await criarPasta(api, "Fotos do painel", painel);
     const cortes = await criarPasta(api, "Cortes de vídeo", painel);
     const porPalestrante = await criarPasta(api, "Fotos por palestrante", painel);
+    const midia = await criarPasta(api, "Áudio e vídeo do painel", painel);
     registros.push(
       { drive_id: painel, painel_slug: p.slug, tipo: "painel", palestrante_id: null },
       { drive_id: fotos, painel_slug: p.slug, tipo: "fotos", palestrante_id: null },
       { drive_id: cortes, painel_slug: p.slug, tipo: "cortes", palestrante_id: null },
       { drive_id: porPalestrante, painel_slug: p.slug, tipo: "palestrantes", palestrante_id: null },
+      { drive_id: midia, painel_slug: p.slug, tipo: "midia", palestrante_id: null },
     );
     for (const s of (palestrantes ?? []).filter((x) => x.painel_slug === p.slug)) {
       const id = await criarPasta(api, s.nome, porPalestrante);
@@ -72,12 +74,13 @@ export async function sincronizar(orcamentoMs = 45_000): Promise<Resultado> {
   const resultado: Resultado = { copiados: 0, erros: 0, pendentes: 0, paineis: [] };
 
   const [{ data: pastas }, { data: fotos }, { data: cortes }, { data: falhas }] = await Promise.all([
-    db.from("pastas_drive").select("drive_id, painel_slug, tipo, palestrante_id").in("tipo", ["fotos", "cortes", "palestrante"]),
+    db.from("pastas_drive").select("drive_id, painel_slug, tipo, palestrante_id").in("tipo", ["fotos", "cortes", "palestrante", "midia"]),
     db.from("fotos").select("origem_drive_id").not("origem_drive_id", "is", null),
     db.from("cortes").select("origem_drive_id").not("origem_drive_id", "is", null),
     db.from("drive_erros").select("drive_id, tentativas"),
   ]);
-  const jaCopiados = new Set([...(fotos ?? []), ...(cortes ?? [])].map((x) => x.origem_drive_id));
+  const { data: envios } = await db.from("envios").select("origem_drive_id").not("origem_drive_id", "is", null);
+  const jaCopiados = new Set([...(fotos ?? []), ...(cortes ?? []), ...(envios ?? [])].map((x) => x.origem_drive_id));
   const desistir = new Set((falhas ?? []).filter((f) => f.tentativas >= 3).map((f) => f.drive_id));
 
   // Uma busca só para todas as pastas (em lotes, por causa do tamanho da consulta).
@@ -89,7 +92,7 @@ export async function sincronizar(orcamentoMs = 45_000): Promise<Resultado> {
     let pageToken: string | undefined;
     do {
       const r = await api.files.list({
-        q: `(${lote.map((id) => `'${id}' in parents`).join(" or ")}) and trashed = false and (mimeType contains 'image/' or mimeType contains 'video/')`,
+        q: `(${lote.map((id) => `'${id}' in parents`).join(" or ")}) and trashed = false and (mimeType contains 'image/' or mimeType contains 'video/' or mimeType contains 'audio/')`,
         fields: "nextPageToken, files(id, name, mimeType, size, parents)",
         pageSize: 1000,
         pageToken,
@@ -109,7 +112,8 @@ export async function sincronizar(orcamentoMs = 45_000): Promise<Resultado> {
       continue;
     }
     try {
-      if (arquivo.mimeType?.startsWith("image/")) await copiarFoto(api, arquivo, arquivo.pasta);
+      if (arquivo.pasta.tipo === "midia") await registrarEnvio(arquivo, arquivo.pasta);
+      else if (arquivo.mimeType?.startsWith("image/")) await copiarFoto(api, arquivo, arquivo.pasta);
       else await copiarVideo(api, arquivo, arquivo.pasta);
       await db.from("drive_erros").delete().eq("drive_id", arquivo.id!);
       paineisTocados.add(arquivo.pasta.painel_slug);
@@ -130,7 +134,20 @@ export async function sincronizar(orcamentoMs = 45_000): Promise<Resultado> {
   return resultado;
 }
 
-async function baixar(api: drive_v3.Drive, id: string) {
+// Áudio/vídeo do painel inteiro: não copia, só registra para a IA processar direto do Drive.
+async function registrarEnvio(arquivo: drive_v3.Schema$File, pasta: Pasta) {
+  const tipo = arquivo.mimeType?.startsWith("audio/") ? "audio" : "video";
+  const r = await supabaseAdmin().from("envios").insert({
+    painel_slug: pasta.painel_slug,
+    tipo,
+    caminho: `drive:${arquivo.id}`,
+    origem_drive_id: arquivo.id,
+    nome: arquivo.name,
+  });
+  if (r.error) throw r.error;
+}
+
+export async function baixar(api: drive_v3.Drive, id: string) {
   const r = await api.files.get({ fileId: id, alt: "media" }, { responseType: "arraybuffer" });
   return Buffer.from(r.data as ArrayBuffer);
 }
