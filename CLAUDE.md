@@ -16,6 +16,7 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 - 09/11 equipe viaja · 11–13/11 conteúdo no mesmo dia · 20/11 hub completo
 
 ## Decisões
+- Endereço fixo: https://hub-oab.vercel.app (admin: /admin).
 - Um site só (Next.js 16 na Vercel), duas portas:
   - Público: link/QR aberto. Resumo "em 1 minuto", cortes, frases, fotos, botão para a
     galeria contratada com busca por selfie (só link; selfie fica na plataforma, LGPD).
