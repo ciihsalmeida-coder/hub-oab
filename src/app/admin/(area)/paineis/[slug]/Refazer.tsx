@@ -36,7 +36,7 @@ export function Refazer({
             }
           });
         }}
-        className="rounded-full border border-navy px-4 py-1.5 text-xs font-bold disabled:opacity-60"
+        className="rounded-full border border-white/30 px-4 py-1.5 text-xs font-bold disabled:opacity-60"
       >
         {cortes ? "🎬 Refazer cortes" : "🔄 Refazer com a IA"}
       </button>

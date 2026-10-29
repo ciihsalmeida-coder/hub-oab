@@ -69,7 +69,7 @@ export default async function Admin() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-extrabold">Olá, {primeiroNome} 👋</h1>
+        <h1 className="text-4xl font-extrabold tracking-tight">Olá, {primeiroNome} 👋</h1>
         <p className="mt-1 text-muted">
           {dias_ > 0
             ? `Faltam ${dias_} dia(s) para a abertura do congresso.`
@@ -95,7 +95,7 @@ export default async function Admin() {
 
       {dias.map((dia) => (
         <section key={dia.data}>
-          <h2 className="mb-2 text-xs font-extrabold tracking-[0.2em] text-wine uppercase">{dia.rotulo}</h2>
+          <h2 className="mb-2 text-xs font-extrabold tracking-[0.2em] text-sky uppercase">{dia.rotulo}</h2>
           <ul className="space-y-3">
             {resumo
               .filter(({ p }) => p.data === dia.data)
@@ -103,21 +103,21 @@ export default async function Admin() {
                 <li key={p.slug}>
                   <Link
                     href={`/admin/paineis/${p.slug}`}
-                    className="group block rounded-3xl border border-line/70 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                    className="group block rounded-[28px] border border-white/12 bg-white/[0.07] p-4 shadow-[0_10px_40px_rgba(0,0,0,0.2)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-sky/50"
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-fog px-2.5 py-1 text-xs font-extrabold text-navy">{p.horario}</span>
+                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-extrabold">{p.horario}</span>
                       <span className="text-xs font-bold text-muted uppercase">{p.numero ? `Painel ${p.numero}` : "Abertura"}</span>
                       <span className="ml-auto">
                         <Status situacao={situacao} />
                       </span>
                     </div>
-                    <p className="mt-2 text-lg leading-snug font-bold group-hover:text-sea">{p.titulo}</p>
+                    <p className="mt-2 text-lg leading-snug font-bold group-hover:text-sky">{p.titulo}</p>
                     <div className="mt-3">
                       <Etapas etapas={etapas} />
                     </div>
                     {pendentes > 0 && (
-                      <p className="mt-2 text-xs font-semibold text-amber-800">{pendentes} item(ns) esperando aprovação →</p>
+                      <p className="mt-2 text-xs font-semibold text-amber-200">{pendentes} item(ns) esperando aprovação →</p>
                     )}
                   </Link>
                 </li>

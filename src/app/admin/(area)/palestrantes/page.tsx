@@ -24,7 +24,7 @@ export default async function Palestrantes() {
       </p>
       {(paineis.data ?? []).map((painel) => (
         <section key={painel.slug} className="mt-6">
-          <h2 className="text-xs font-extrabold tracking-[0.2em] text-wine uppercase">
+          <h2 className="text-xs font-extrabold tracking-[0.2em] text-sky uppercase">
             {painel.numero ? `Painel ${painel.numero}` : "Abertura"} · {painel.titulo}
           </h2>
           <ul className="mt-2 space-y-2">

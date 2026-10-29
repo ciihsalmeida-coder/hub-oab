@@ -99,7 +99,7 @@ export function Fotos(props: { slug: string; fotos: Foto[]; palestrantes: { id: 
       {progresso && (
         <p className="mt-2 text-sm font-semibold">
           {enviando ? "Enviando" : "Pronto:"} {progresso.feitas} de {progresso.total} foto(s)
-          {progresso.erros > 0 && <span className="text-wine"> · {progresso.erros} com erro (tente de novo)</span>}
+          {progresso.erros > 0 && <span className="text-red-300"> · {progresso.erros} com erro (tente de novo)</span>}
         </p>
       )}
 
@@ -110,7 +110,7 @@ export function Fotos(props: { slug: string; fotos: Foto[]; palestrantes: { id: 
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={f.miniatura ?? f.url} alt="" loading="lazy" className="aspect-[4/5] w-full object-cover" />
               <div className="space-y-2 p-2">
-                <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${f.publicada ? "bg-green-100 text-green-900" : "bg-amber-100 text-amber-900"}`}>
+                <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${f.publicada ? "bg-emerald-400/20 text-emerald-200" : "bg-amber-300/20 text-amber-200"}`}>
                   {f.publicada ? "Publicada" : "Rascunho"}
                 </span>
                 <select
@@ -130,7 +130,7 @@ export function Fotos(props: { slug: string; fotos: Foto[]; palestrantes: { id: 
                   onClick={() => {
                     if (confirm("Remover esta foto?")) iniciar(async () => { await removerFoto(props.slug, f.id); router.refresh(); });
                   }}
-                  className="text-xs font-semibold text-wine"
+                  className="text-xs font-semibold text-red-300"
                 >
                   Remover
                 </button>

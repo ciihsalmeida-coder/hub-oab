@@ -43,10 +43,10 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/admin" className="text-sm font-semibold text-muted hover:text-navy">
+        <Link href="/admin" className="text-sm font-semibold text-muted hover:text-white">
           ← Todos os painéis
         </Link>
-        <div className="mt-3 rounded-3xl bg-navy p-5 text-white shadow-sm">
+        <div className="mt-3 rounded-[28px] border border-white/15 bg-gradient-to-br from-sky/35 via-sea/30 to-wine/30 p-6 text-white shadow-[0_10px_40px_rgba(0,0,0,0.3)] backdrop-blur-xl">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-extrabold">{p.horario}</span>
             <span className="text-xs font-bold text-white/70 uppercase">{p.numero ? `Painel ${p.numero}` : "Abertura"}</span>
@@ -54,7 +54,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
               <Status situacao={situacao} />
             </span>
           </div>
-          <h1 className="mt-3 text-2xl leading-tight font-extrabold">{p.titulo}</h1>
+          <h1 className="mt-3 text-3xl leading-tight font-extrabold tracking-tight">{p.titulo}</h1>
           <div className="mt-4 flex flex-wrap gap-2 text-sm font-bold">
             <Link href={`/paineis/${slug}`} target="_blank" className="rounded-full bg-white px-4 py-2 text-navy">
               Ver página pública ↗
@@ -115,7 +115,7 @@ function StatusIA({ envio, slug }: { envio?: { nome: string | null; etapa: strin
     );
   }
   const [icone, texto] = etapas[envio.etapa] ?? ["ℹ️", envio.etapa];
-  const cor = envio.etapa === "erro" ? "border-wine/40 bg-red-50" : envio.etapa === "pronto" ? "border-green-200 bg-green-50" : "border-sky/40 bg-sky/5";
+  const cor = envio.etapa === "erro" ? "border-red-300/30 bg-red-400/10" : envio.etapa === "pronto" ? "border-emerald-300/30 bg-emerald-400/10" : "border-sky/40 bg-sky/5";
   return (
     <section className={`rounded-3xl border p-5 ${cor}`}>
       <TituloCartao
@@ -124,7 +124,7 @@ function StatusIA({ envio, slug }: { envio?: { nome: string | null; etapa: strin
         ajuda={`Arquivo: ${envio.nome ?? "—"}`}
         acao={["pronto", "erro"].includes(envio.etapa) ? <Refazer slug={slug} /> : undefined}
       />
-      {envio.erro && <p className="font-semibold text-wine">{envio.erro}</p>}
+      {envio.erro && <p className="font-semibold text-red-300">{envio.erro}</p>}
     </section>
   );
 }
@@ -175,10 +175,10 @@ function Cortes({ slug, cortes, palestrantes }: { slug: string; cortes: Corte[];
                 {c.status === "publicado" ? "publicado" : "rascunho"}
               </p>
               <QuemNoCorte slug={slug} corteId={c.id} atual={c.palestrante_id} palestrantes={palestrantes} />
-              {c.erro && <p className="text-xs font-semibold text-wine">{c.erro}</p>}
-              {c.legenda_sugerida && <p className="rounded-xl bg-white p-2 text-xs">💬 {c.legenda_sugerida}</p>}
+              {c.erro && <p className="text-xs font-semibold text-red-300">{c.erro}</p>}
+              {c.legenda_sugerida && <p className="rounded-xl bg-white/10 p-2 text-xs">💬 {c.legenda_sugerida}</p>}
               {c.video_url && (
-                <a href={c.video_url} download className="inline-block text-xs font-bold text-sea underline">
+                <a href={c.video_url} download className="inline-block text-xs font-bold text-sky underline">
                   ⬇ Baixar vídeo
                 </a>
               )}

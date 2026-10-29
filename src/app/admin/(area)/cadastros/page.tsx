@@ -11,14 +11,14 @@ export default async function Cadastros() {
     <div>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-extrabold">Cadastros do público</h1>
-        <a href="/admin/cadastros/planilha" className="ml-auto rounded-full bg-navy px-4 py-2 text-sm font-bold text-white">
+        <a href="/admin/cadastros/planilha" className="ml-auto rounded-full bg-sky px-4 py-2 text-sm font-bold text-navy">
           ⬇ Baixar planilha
         </a>
       </div>
       <p className="mt-1 text-sm text-muted">
         {lista.length} pessoa(s). Os dados pertencem à OAB/SC e só podem ser usados para enviar conteúdos do congresso.
       </p>
-      <ul className="mt-4 divide-y divide-line rounded-2xl border border-line bg-card">
+      <ul className="mt-4 divide-y divide-line rounded-[24px] border border-line bg-white/[0.07] backdrop-blur-xl">
         {lista.map((c) => (
           <li key={c.email} className="p-3 text-sm">
             <p className="font-bold">{c.nome}</p>

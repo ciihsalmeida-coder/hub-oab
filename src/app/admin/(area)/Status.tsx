@@ -11,9 +11,9 @@ export function situacaoDoPainel(
 }
 
 const estilos: Record<Situacao, [string, string]> = {
-  vazio: ["bg-line text-muted", "⚪ Aguardando conteúdo"],
-  rascunho: ["bg-amber-100 text-amber-900", "🟡 Rascunho · aguardando aprovação"],
-  publicado: ["bg-green-100 text-green-900", "✅ Publicado"],
+  vazio: ["bg-white/10 text-white/70", "⚪ Aguardando conteúdo"],
+  rascunho: ["bg-amber-300/20 text-amber-200", "🟡 Rascunho · aguardando aprovação"],
+  publicado: ["bg-emerald-400/20 text-emerald-200", "✅ Publicado"],
 };
 
 export function Status({ situacao }: { situacao: Situacao }) {

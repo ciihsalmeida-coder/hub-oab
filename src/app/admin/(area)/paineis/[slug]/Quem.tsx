@@ -17,7 +17,7 @@ export function QuemNoCorte(props: { slug: string; corteId: string; atual: strin
           router.refresh();
         })
       }
-      className={`w-full rounded-xl border px-3 py-2 text-sm ${props.atual ? "border-line" : "border-amber-400 bg-amber-50"}`}
+      className={`w-full rounded-xl border px-3 py-2 text-sm ${props.atual ? "border-line" : "border-amber-300/60 bg-amber-300/15"}`}
     >
       <option value="">Quem aparece no vídeo?</option>
       {props.palestrantes.map((p) => (

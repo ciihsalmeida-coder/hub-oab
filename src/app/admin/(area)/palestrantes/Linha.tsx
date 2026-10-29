@@ -19,7 +19,7 @@ export function Linha(props: { p: P; codigo: string; enviadoEm: string | null; f
   const pronto = props.falas + props.fotos > 0;
 
   return (
-    <li className={`rounded-2xl border bg-card p-3 ${p.pendente ? "border-dashed border-wine" : "border-line"}`}>
+    <li className={`rounded-[24px] border bg-white/[0.07] p-3 backdrop-blur-xl ${p.pendente ? "border-dashed border-red-300/60" : "border-line"}`}>
       <div className="flex items-center gap-3">
         <Avatar nome={p.nome} foto={p.foto_url ?? undefined} tamanho={48} />
         <div className="min-w-0 flex-1">
@@ -29,11 +29,11 @@ export function Linha(props: { p: P; codigo: string; enviadoEm: string | null; f
             {pronto ? `✅ ${props.falas} fala(s), ${props.fotos} foto(s) aprovadas` : "⏳ kit ainda vazio"}
             {props.enviadoEm && " · 📨 enviado"}
           </p>
-          {p.pendente && <p className="text-xs font-semibold text-wine">⚠ {p.pendente}</p>}
+          {p.pendente && <p className="text-xs font-semibold text-red-300">⚠ {p.pendente}</p>}
         </div>
       </div>
       <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
-        <a href={`/kit/${props.codigo}`} target="_blank" rel="noreferrer" className="rounded-full border border-navy px-3 py-1.5">
+        <a href={`/kit/${props.codigo}`} target="_blank" rel="noreferrer" className="rounded-full border border-white/30 px-3 py-1.5">
           Ver kit ↗
         </a>
         {p.whatsapp ? (
@@ -81,7 +81,7 @@ export function Linha(props: { p: P; codigo: string; enviadoEm: string | null; f
               <input type="checkbox" name="resolvido" /> Pendência do carômetro resolvida
             </label>
           )}
-          <button disabled={pendente} className="rounded-full bg-navy px-4 py-2 font-bold text-white disabled:opacity-60">
+          <button disabled={pendente} className="rounded-full bg-sky px-4 py-2 font-bold text-navy disabled:opacity-60">
             Salvar
           </button>
           {aviso && <span className="ml-2 font-semibold">{aviso}</span>}

@@ -21,8 +21,8 @@ export function Aprovacao(props: { slug: string; podeAprovar: boolean; publicado
   }
 
   return (
-    <div className="sticky bottom-3 z-20 mt-8">
-      <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-line/70 bg-white/95 p-3 shadow-lg backdrop-blur">
+    <div className="sticky bottom-24 z-20 mt-8 sm:bottom-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-full border border-white/15 bg-[#081726]/85 p-2 pl-5 shadow-2xl backdrop-blur-xl">
         <p className="min-w-0 flex-1 text-sm">
           {aviso ||
             (props.pendentes > 0 ? (
@@ -44,7 +44,7 @@ export function Aprovacao(props: { slug: string; podeAprovar: boolean; publicado
                 onClick={() => {
                   if (confirm("Tirar todo o conteúdo deste painel do ar?")) executar(() => despublicar(props.slug), "Conteúdo retirado do ar.");
                 }}
-                className="rounded-full px-4 py-3 text-sm font-bold text-wine hover:bg-red-50 disabled:opacity-60"
+                className="rounded-full px-4 py-3 text-sm font-bold text-red-300 hover:bg-red-400/10 disabled:opacity-60"
               >
                 Tirar do ar
               </button>

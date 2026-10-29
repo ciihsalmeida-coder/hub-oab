@@ -44,7 +44,7 @@ export function Editor(props: {
               defaultValue={p}
               rows={2}
               placeholder={`Ponto ${i + 1}`}
-              className="w-full rounded-2xl border border-line bg-fog/40 px-4 py-3 focus:border-sky focus:bg-white focus:outline-none"
+              className="w-full rounded-2xl border border-line bg-fog/40 px-4 py-3 focus:border-sky focus:bg-white/10 focus:outline-none"
             />
           ))}
           {pontos.length < 5 && (
@@ -60,7 +60,7 @@ export function Editor(props: {
           name="resumo"
           defaultValue={props.resumo}
           rows={10}
-          className="w-full rounded-2xl border border-line bg-fog/40 px-4 py-3 focus:border-sky focus:bg-white focus:outline-none leading-relaxed"
+          className="w-full rounded-2xl border border-line bg-fog/40 px-4 py-3 focus:border-sky focus:bg-white/10 focus:outline-none leading-relaxed"
         />
       </Bloco>
 
@@ -93,7 +93,7 @@ export function Editor(props: {
                 <button
                   type="button"
                   onClick={() => setFalas(falas.filter((_, j) => j !== i))}
-                  className="rounded-lg px-3 py-2 text-sm font-semibold text-wine"
+                  className="rounded-lg px-3 py-2 text-sm font-semibold text-red-300"
                 >
                   Remover
                 </button>
@@ -111,7 +111,7 @@ export function Editor(props: {
       </Bloco>
 
       <div className="flex flex-wrap items-center gap-3">
-        <button disabled={pendente} className="rounded-full bg-navy px-6 py-3 font-extrabold text-white disabled:opacity-60">
+        <button disabled={pendente} className="rounded-full bg-sky px-6 py-3 font-extrabold text-navy disabled:opacity-60">
           {pendente ? "Salvando…" : "💾 Salvar textos"}
         </button>
         {aviso && <p className="text-sm font-semibold">{aviso}</p>}
