@@ -59,3 +59,14 @@ body {
 .tema-app ::placeholder {
   color: rgba(226, 236, 246, 0.45);
 }
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(1.5vw) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
