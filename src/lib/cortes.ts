@@ -4,20 +4,25 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 const REPO = "ciihsalmeida-coder/hub-oab";
 const INTERVALO_MS = 20 * 60_000; // espera entre disparos do mesmo painel
 
-// Acorda o robô de cortes (GitHub Actions) para painéis com vídeo e trechos sem vídeo.
+// Acorda o robô de cortes (GitHub Actions) para painéis com trechos sem vídeo ou cortes sem versão leve.
 export async function dispararCortes() {
   if (!process.env.GITHUB_TOKEN) return [];
   const db = supabaseAdmin();
-  const [{ data: pendentes }, { data: videos }, { data: paineis }] = await Promise.all([
+  const [{ data: pendentes }, { data: semVersaoLeve }, { data: videos }, { data: paineis }] = await Promise.all([
     db.from("cortes").select("painel_slug").eq("origem", "auto").is("video_url", null).lt("tentativas", 3),
+    db.from("cortes").select("painel_slug").not("video_url", "is", null).is("video_web_url", null),
     db.from("envios").select("painel_slug").eq("tipo", "video"),
     db.from("paineis").select("slug, cortes_disparado_em"),
   ]);
   const comVideo = new Set((videos ?? []).map((v) => v.painel_slug));
   const agora = Date.now();
-  const alvos = [...new Set((pendentes ?? []).map((c) => c.painel_slug))].filter((slug) => {
+  const precisam = new Set([
+    ...(pendentes ?? []).map((c) => c.painel_slug).filter((slug) => comVideo.has(slug)),
+    ...(semVersaoLeve ?? []).map((c) => c.painel_slug),
+  ]);
+  const alvos = [...precisam].filter((slug) => {
     const ultimo = paineis?.find((p) => p.slug === slug)?.cortes_disparado_em;
-    return comVideo.has(slug) && (!ultimo || agora - new Date(ultimo).getTime() > INTERVALO_MS);
+    return !ultimo || agora - new Date(ultimo).getTime() > INTERVALO_MS;
   });
 
   for (const painel of alvos) {

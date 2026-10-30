@@ -15,7 +15,7 @@ export async function GET() {
     db.from("fotos").select("id, url, painel_slug").order("criado_em", { ascending: false }).limit(40),
     db
       .from("cortes")
-      .select("id, titulo, video_url, palestrante_id")
+      .select("id, titulo, video_url, video_web_url, palestrante_id")
       .not("video_url", "is", null)
       .order("criado_em", { ascending: false })
       .limit(10),
@@ -30,7 +30,7 @@ export async function GET() {
         return { id: f.id, texto: f.texto, nome: p?.nome ?? null, cargo: p?.cargo ?? null, foto: p?.foto_url ?? null };
       }),
       fotos: fotos.data ?? [],
-      cortes: (cortes.data ?? []).map((c) => ({ ...c, nome: c.palestrante_id ? quem.get(c.palestrante_id)?.nome ?? null : null })),
+      cortes: (cortes.data ?? []).map(({ video_web_url, ...c }) => ({ ...c, video_url: video_web_url ?? c.video_url, nome: c.palestrante_id ? quem.get(c.palestrante_id)?.nome ?? null : null })),
     },
     { headers: { "cache-control": "public, s-maxage=30, stale-while-revalidate=60" } },
   );

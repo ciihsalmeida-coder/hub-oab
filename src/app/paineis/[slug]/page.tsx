@@ -81,7 +81,7 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
                 <figure key={c.id} className="w-64 shrink-0 snap-start overflow-hidden rounded-2xl bg-card shadow-sm">
                   {c.videoUrl && (
                     <video
-                      src={c.videoUrl}
+                      src={c.videoWebUrl ?? undefined}
                       poster={c.capaUrl ?? undefined}
                       controls
                       playsInline

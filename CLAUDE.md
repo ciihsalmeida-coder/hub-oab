@@ -73,6 +73,8 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
    `/api/ia/processar` via GITHUB_TOKEN (Vercel). Secrets no GitHub: SUPABASE_SECRET_KEY,
    GOOGLE_SERVICE_ACCOUNT_JSON. Vídeo = o de mesmo nome do áudio (senão o mais recente).
    Testado ponta a ponta em 29/10 (disparo automático pelo site OK). Botão "Refazer cortes" no editor.
+   O robô também faz versão leve 720p (`video_web_url`) + capa de todo corte (inclusive manuais do Drive);
+   o site toca a leve, o kit baixa a original. Falha na leve → `video_web_url` = original.
 5. ✅ Kits (`/kit/<slug>-<token>`, só aprovado) + aba /admin/palestrantes (editar carômetro,
    WhatsApp com 55, enviar kit) + cadastro do público.
 6. ✅ Manual do dia + plano B (/admin/manual), mural do telão (/mural), resumo do dia (/admin/resumo-do-dia),

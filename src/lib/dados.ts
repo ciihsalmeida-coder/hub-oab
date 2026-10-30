@@ -18,6 +18,8 @@ export type Corte = {
   id: string;
   titulo: string;
   videoUrl: string | null;
+  /** Versão leve (720p) para tocar no site; cai na original se ainda não existir. */
+  videoWebUrl: string | null;
   capaUrl: string | null;
   legenda: string | null;
   palestranteId: string | null;
@@ -93,7 +95,7 @@ export async function buscarConteudo(slug: string): Promise<ConteudoPainel | nul
       db.from("falas").select("id, texto, palestrante_id, ordem").eq("painel_slug", slug).order("ordem"),
       db
         .from("cortes")
-        .select("id, titulo, video_url, capa_url, legenda_sugerida, palestrante_id")
+        .select("id, titulo, video_url, video_web_url, capa_url, legenda_sugerida, palestrante_id")
         .eq("painel_slug", slug)
         .not("video_url", "is", null)
         .order("ordem"),
@@ -108,6 +110,7 @@ export async function buscarConteudo(slug: string): Promise<ConteudoPainel | nul
         id: c.id,
         titulo: c.titulo,
         videoUrl: c.video_url,
+        videoWebUrl: c.video_web_url ?? c.video_url,
         capaUrl: c.capa_url,
         legenda: c.legenda_sugerida,
         palestranteId: c.palestrante_id,

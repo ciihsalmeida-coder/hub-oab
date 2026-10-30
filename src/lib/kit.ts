@@ -21,7 +21,7 @@ export async function buscarKit(codigo: string) {
     db.from("fotos").select("id, url, miniatura_url").eq("palestrante_id", p.id).eq("status", "publicado").order("ordem"),
     db
       .from("cortes")
-      .select("id, titulo, video_url")
+      .select("id, titulo, video_url, video_web_url, capa_url")
       .eq("palestrante_id", p.id)
       .eq("status", "publicado")
       .not("video_url", "is", null)

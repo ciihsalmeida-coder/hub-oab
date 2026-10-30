@@ -180,7 +180,7 @@ export async function refazerCortes(slug: string) {
   if (!membro) throw new Error("Sem permissão.");
   const r1 = await db
     .from("cortes")
-    .update({ video_url: null, tentativas: 0, erro: null, status: "rascunho" })
+    .update({ video_url: null, video_web_url: null, capa_url: null, tentativas: 0, erro: null, status: "rascunho" })
     .eq("painel_slug", slug)
     .eq("origem", "auto");
   if (r1.error) throw r1.error;

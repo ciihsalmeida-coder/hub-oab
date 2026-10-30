@@ -4,7 +4,9 @@ Roda no GitHub Actions (ver .github/workflows/cortes.yml), um painel por vez:
 1. baixa o vídeo do painel do Google Drive;
 2. acha o atraso entre o áudio da mesa de som (base dos tempos da transcrição) e o vídeo;
 3. corta cada trecho em 9:16 com legenda na tela;
-4. sobe o arquivo no Supabase e preenche o corte (continua como rascunho).
+4. sobe o arquivo no Supabase e preenche o corte (continua como rascunho);
+5. faz uma versão leve (720p) e uma capa de todo corte com vídeo (inclusive os enviados pelo Drive),
+   para o site tocar sem travar no celular. A original fica para download.
 """
 
 import json
@@ -150,7 +152,69 @@ def legenda_ass(frases, inicio, fim, destino):
         arq.write("\n".join(linhas) + "\n")
 
 
+def otimizar():
+    """Versão leve + capa para cortes que ainda não têm (automáticos e manuais)."""
+    cortes = consulta(
+        "cortes",
+        {
+            "painel_slug": f"eq.{PAINEL}",
+            "video_url": "not.is.null",
+            "video_web_url": "is.null",
+            "select": "id,video_url,capa_url",
+        },
+    )
+    with tempfile.TemporaryDirectory() as pasta:
+        for corte in cortes:
+            original = os.path.join(pasta, "original")
+            leve = os.path.join(pasta, "leve.mp4")
+            capa = os.path.join(pasta, "capa.jpg")
+            try:
+                with urllib.request.urlopen(corte["video_url"], timeout=600) as r, open(original, "wb") as f:
+                    while bloco := r.read(8 * 1024 * 1024):
+                        f.write(bloco)
+                # Cabe em 720x1280 sem cortar nada (serve para vídeo vertical ou horizontal).
+                escala = "scale=720:1280:force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2"
+                subprocess.run(
+                    [
+                        "ffmpeg", "-v", "error", "-y", "-i", original, "-vf", escala,
+                        "-c:v", "libx264", "-preset", "medium", "-crf", "27", "-maxrate", "1500k", "-bufsize", "3000k",
+                        "-g", "48", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", leve,
+                    ],
+                    check=True,
+                )
+                subprocess.run(
+                    ["ffmpeg", "-v", "error", "-y", "-ss", "1", "-i", original, "-frames:v", "1", "-vf", escala, "-q:v", "4", capa],
+                    check=True,
+                )
+                base = f"{PAINEL}/{corte['id']}"
+                for arquivo, destino, tipo in ((leve, f"{base}-web.mp4", "video/mp4"), (capa, f"{base}-capa.jpg", "image/jpeg")):
+                    with open(arquivo, "rb") as arq:
+                        supabase(
+                            "POST",
+                            f"/storage/v1/object/cortes/{destino}",
+                            arq.read(),
+                            {"Content-Type": tipo, "x-upsert": "true", "cache-control": "31536000"},
+                            bruto=True,
+                        )
+                publico = f"{SUPABASE_URL}/storage/v1/object/public/cortes/{base}"
+                # O "?v=" muda a cada versão para o navegador não mostrar a capa/vídeo antigos.
+                versao = os.path.getmtime(leve)
+                campos = {"video_web_url": f"{publico}-web.mp4?v={versao:.0f}"}
+                if not corte["capa_url"]:
+                    campos["capa_url"] = f"{publico}-capa.jpg?v={versao:.0f}"
+                atualizar("cortes", {"id": f"eq.{corte['id']}"}, campos)
+                print(f"Versão leve pronta: {base}-web.mp4 ({os.path.getsize(leve) / 1024 / 1024:.1f} MB)")
+            except Exception as erro:  # noqa: BLE001 - sem versão leve, o site usa a original
+                print(f"Falha na versão leve do corte {corte['id']}: {erro}")
+                atualizar("cortes", {"id": f"eq.{corte['id']}"}, {"video_web_url": corte["video_url"]})
+
+
 def main():
+    cortar()
+    otimizar()
+
+
+def cortar():
     cortes = consulta(
         "cortes",
         {
@@ -233,7 +297,11 @@ def main():
                         bruto=True,
                     )
                 url = f"{SUPABASE_URL}/storage/v1/object/public/cortes/{destino}"
-                atualizar("cortes", {"id": f"eq.{corte['id']}"}, {"video_url": url, "erro": None, "status": "rascunho"})
+                atualizar(
+                    "cortes",
+                    {"id": f"eq.{corte['id']}"},
+                    {"video_url": url, "video_web_url": None, "capa_url": None, "erro": None, "status": "rascunho"},
+                )
                 print(f"Corte pronto: {destino}")
             except Exception as erro:  # noqa: BLE001 - registra e segue para o próximo corte
                 print(f"Falha no corte {corte['id']}: {erro}")

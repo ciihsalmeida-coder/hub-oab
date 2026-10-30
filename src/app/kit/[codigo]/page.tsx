@@ -95,7 +95,7 @@ export default async function Kit({ params }: { params: Promise<{ codigo: string
             <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2">
               {kit.cortes.map((c) => (
                 <figure key={c.id} className="w-64 shrink-0 snap-start overflow-hidden rounded-2xl bg-card shadow-sm">
-                  <video src={c.video_url!} controls playsInline preload="none" className="aspect-[9/16] w-full bg-navy object-cover" />
+                  <video src={c.video_web_url ?? c.video_url!} poster={c.capa_url ?? undefined} controls playsInline preload="none" className="aspect-[9/16] w-full bg-navy object-cover" />
                   <figcaption className="p-3">
                     <p className="leading-tight font-bold">{c.titulo}</p>
                     <LinkContado tipo="baixou_video" alvo={p.slug} href={c.video_url!} download className="mt-3 block rounded-full bg-sky py-2 text-center text-sm font-extrabold text-navy uppercase">
