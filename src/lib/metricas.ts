@@ -1,7 +1,7 @@
 "use client";
 
 import { supabaseConfigurado } from "@/lib/supabase/config";
-import { supabaseNavegador } from "@/lib/supabase/navegador";
+import { inserirPublico } from "@/lib/supabase/inserir";
 
 export type TipoEvento =
   | "visita_home"
@@ -17,7 +17,5 @@ export type TipoEvento =
 // Contagem anônima (só a ação e o painel/palestrante). Nunca atrapalha a página se falhar.
 export function registrar(tipo: TipoEvento, alvo?: string) {
   if (!supabaseConfigurado) return;
-  try {
-    void supabaseNavegador().from("eventos").insert({ tipo, alvo: alvo ?? null }).then(() => {});
-  } catch {}
+  void inserirPublico("eventos", { tipo, alvo: alvo ?? null });
 }
