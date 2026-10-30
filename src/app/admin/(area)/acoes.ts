@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { exigirEquipe } from "@/lib/equipe";
 import { gerarResumoDoDia } from "@/lib/resumo-dia";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { idDoYoutube } from "@/lib/youtube";
 
 type FalaRascunho = { texto: string; palestranteId: string | null; inicioMs?: number | null };
 
@@ -216,6 +217,20 @@ export async function definirGaleria(url: string) {
   const r = await db.from("paineis").update({ galeria_url: limpo || null }).neq("slug", "");
   if (r.error) throw r.error;
   revalidatePath("/", "layout");
+}
+
+// Gravação completa da sessão no YouTube (não listado). Vazio remove.
+export async function definirVideoSessao(slug: string, url: string) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const id = url.trim() ? idDoYoutube(url) : null;
+  if (url.trim() && !id) throw new Error("Não reconheci esse link. Copie o endereço do vídeo no YouTube (botão Compartilhar).");
+  const r = await db
+    .from("paineis")
+    .update({ video_sessao_url: id ? `https://www.youtube.com/watch?v=${id}` : null })
+    .eq("slug", slug);
+  if (r.error) throw r.error;
+  atualizarSite(slug);
 }
 
 // Resumo do dia para a comissão (IA), e a versão editada pela equipe.

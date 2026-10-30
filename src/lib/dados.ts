@@ -9,6 +9,7 @@ export type PalestrantePublico = { id?: string; slug?: string; nome: string; car
 export type PainelPublico = Omit<PainelFixo, "palestrantes"> & {
   palestrantes: PalestrantePublico[];
   galeriaUrl: string | null;
+  videoSessaoUrl: string | null;
   resumo: string | null;
   pontos: string[];
 };
@@ -29,7 +30,7 @@ export type Foto = { id: string; url: string; miniatura: string | null; palestra
 export type ConteudoPainel = PainelPublico & { falas: Fala[]; cortes: Corte[]; fotos: Foto[] };
 
 function daProgramacaoFixa(p: PainelFixo): PainelPublico {
-  return { ...p, galeriaUrl: null, resumo: null, pontos: [] };
+  return { ...p, galeriaUrl: null, videoSessaoUrl: null, resumo: null, pontos: [] };
 }
 
 type LinhaPainel = {
@@ -40,6 +41,7 @@ type LinhaPainel = {
   data: string;
   horario: string;
   galeria_url: string | null;
+  video_sessao_url: string | null;
   resumo_publicado: string | null;
   pontos_publicados: string[] | null;
 };
@@ -55,6 +57,7 @@ function montar(linha: LinhaPainel, palestrantes: LinhaPalestrante[]): PainelPub
     data: linha.data,
     horario: linha.horario,
     galeriaUrl: linha.galeria_url,
+    videoSessaoUrl: linha.video_sessao_url,
     resumo: linha.resumo_publicado,
     pontos: linha.pontos_publicados ?? [],
     palestrantes: palestrantes
@@ -63,7 +66,7 @@ function montar(linha: LinhaPainel, palestrantes: LinhaPalestrante[]): PainelPub
   };
 }
 
-const colunasPainel = "slug, numero, titulo, area, data, horario, galeria_url, resumo_publicado, pontos_publicados";
+const colunasPainel = "slug, numero, titulo, area, data, horario, galeria_url, video_sessao_url, resumo_publicado, pontos_publicados";
 const colunasPalestrante = "id, painel_slug, slug, nome, cargo, foto_url";
 
 export async function listarPaineis(): Promise<PainelPublico[]> {

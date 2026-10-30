@@ -5,6 +5,7 @@ import { GaleriaBotao } from "@/components/GaleriaBotao";
 import { Assinatura, FaixaLocal, Voltar } from "@/components/Marca";
 import { Palestrante } from "@/components/Palestrante";
 import { LinkContado, Rastrear } from "@/components/Rastrear";
+import { VideoSessao } from "@/components/VideoSessao";
 import { congresso, dias, paineis } from "@/data/programacao";
 import { buscarConteudo } from "@/lib/dados";
 
@@ -73,6 +74,12 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
             <EmBreve>O resumo com as principais ideias aparece aqui no mesmo dia do painel.</EmBreve>
           )}
         </Secao>
+
+        {painel.videoSessaoUrl && (
+          <Secao titulo="Assista à sessão completa">
+            <VideoSessao url={painel.videoSessaoUrl} titulo={painel.titulo} />
+          </Secao>
+        )}
 
         <Secao titulo="Melhores momentos em vídeo">
           {painel.cortes.length ? (

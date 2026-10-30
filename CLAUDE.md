@@ -80,4 +80,7 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 6. ✅ Manual do dia + plano B (/admin/manual), mural do telão (/mural), resumo do dia (/admin/resumo-do-dia),
    QR codes e "Agora no palco" (/admin/materiais), métricas anônimas (tabela `eventos`, view `metricas`,
    /admin/metricas; aviso em /privacidade).
-7. Teste de carga antes de 08/11.
+7. ✅ Filtro por eixo na home (`ListaPaineis`) e vídeo da sessão completa via YouTube não listado
+   (`paineis.video_sessao_url`, campo no editor do painel; capa leve até tocar, youtube-nocookie).
+   Publica ao salvar (não passa pela aprovação).
+8. Teste de carga antes de 08/11.
