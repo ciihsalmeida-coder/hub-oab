@@ -100,7 +100,9 @@ export function Mural({ qr, site }: { qr: string; site: string }) {
 
       <aside className="flex w-[24vw] flex-col justify-between border-l border-white/10 bg-[#081726]/60 p-[2vw] backdrop-blur-xl">
         <div>
-          <p className="text-[1vw] font-extrabold tracking-[0.2em] text-sky uppercase">XIV Congresso OAB</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/marca/oab-branco.png" alt="OAB Santa Catarina" className="mb-[1.2vw] h-[3.2vw] w-auto" />
+          <p className="text-[1vw] font-extrabold tracking-[0.2em] text-sky uppercase">XIV Congresso</p>
           <p className="mt-[0.5vw] text-[1.5vw] leading-tight font-light">
             Direito Marítimo, Portuário e <strong className="font-extrabold">Aduaneiro</strong>
           </p>
@@ -121,6 +123,8 @@ export function Mural({ qr, site }: { qr: string; site: string }) {
           <div className="mx-auto w-[15vw] rounded-[1.5vw] bg-white p-[0.8vw]" dangerouslySetInnerHTML={{ __html: qr }} />
           <p className="mt-[1vw] text-[1.2vw] font-extrabold">Resumos, vídeos e suas fotos</p>
           <p className="text-[1vw] text-white/70">{site}</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/marca/mzen-branco.png" alt="Mzen" className="mx-auto mt-[1.6vw] h-[1vw] w-auto opacity-40" />
         </div>
       </aside>
     </main>

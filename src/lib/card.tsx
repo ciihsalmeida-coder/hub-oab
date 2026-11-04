@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { LOGO_OAB_AZUL } from "@/lib/logo-oab";
 
 type Pessoa = { nome: string; cargo: string; foto?: string | null };
 
@@ -28,9 +29,11 @@ export function gerarCard(dados: Modelo) {
         style={{
           display: "flex",
           flexDirection: "column",
-          padding: "80px 80px 0",
+          padding: "72px 80px 0",
         }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={LOGO_OAB_AZUL} width={152} height={80} style={{ marginBottom: 28 }} alt="" />
         <div
           style={{
             display: "flex",

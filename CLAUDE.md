@@ -35,7 +35,9 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 - Supabase: projeto `hub-oab-sp` em São Paulo (sa-east-1). Free agora, Pro no mês do
   evento. Vercel Pro no mês do evento (Hobby não permite uso comercial).
 - Identidade visual: cartaz oficial (névoa sobre o mar, marinho, azul-claro, vinho,
-  Montserrat). Logo da OAB ainda é imitação em texto — trocar pelos arquivos oficiais.
+  Montserrat). Logos oficiais em `public/marca/` (OAB/SC azul e branco, Mzen colorido e branco); assinatura
+  como no cartaz (OAB | Comissões | ESA | CAASC). Mzen discreta: rodapé e canto do mural. Cards: logo OAB
+  embutido em `src/lib/logo-oab.ts` (next/og não busca arquivo do próprio site).
 
 ## Equipe (tabela `equipe`)
 - Cilene (cilene@mzen.com.br) está como `aprovador` SÓ PARA TESTES. Antes do evento,
