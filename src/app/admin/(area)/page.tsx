@@ -120,12 +120,12 @@ export default async function Admin() {
         <span aria-hidden>→</span>
       </Link>
 
-      {dias.map((dia) => (
+      {[...dias, { data: "ensaio", rotulo: "🧪 Ensaio da equipe · não aparece para o público" }].map((dia) => (
         <section key={dia.data}>
           <h2 className="mb-2 text-xs font-extrabold tracking-[0.2em] text-sky uppercase">{dia.rotulo}</h2>
           <ul className="space-y-3">
             {resumo
-              .filter(({ p }) => p.data === dia.data)
+              .filter(({ p }) => (dia.data === "ensaio" ? p.slug === "ensaio" : p.data === dia.data))
               .map(({ p, situacao, etapas, pendentes }) => (
                 <li key={p.slug}>
                   <Link
@@ -134,7 +134,7 @@ export default async function Admin() {
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-extrabold">{p.horario}</span>
-                      <span className="text-xs font-bold text-muted uppercase">{p.numero ? `Painel ${p.numero}` : "Abertura"}</span>
+                      <span className="text-xs font-bold text-muted uppercase">{p.slug === "ensaio" ? "Ensaio" : p.numero ? `Painel ${p.numero}` : "Abertura"}</span>
                       <span className="ml-auto">
                         <Status situacao={situacao} />
                       </span>

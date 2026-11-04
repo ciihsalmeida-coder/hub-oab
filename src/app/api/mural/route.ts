@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { momentoAtual } from "@/lib/agenda";
 import { supabaseConfigurado } from "@/lib/supabase/config";
 import { supabasePublico } from "@/lib/supabase/publico";
+import { PAINEL_ENSAIO } from "@/lib/ensaio";
 
 export const dynamic = "force-dynamic";
 
@@ -11,11 +12,22 @@ export async function GET() {
   if (!supabaseConfigurado) return NextResponse.json(vazio);
   const db = supabasePublico();
   const [falas, fotos, cortes, palestrantes] = await Promise.all([
-    db.from("falas").select("id, texto, palestrante_id, painel_slug").order("ordem").limit(60),
-    db.from("fotos").select("id, url, painel_slug").order("criado_em", { ascending: false }).limit(40),
+    db
+      .from("falas")
+      .select("id, texto, palestrante_id, painel_slug")
+      .neq("painel_slug", PAINEL_ENSAIO)
+      .order("ordem")
+      .limit(60),
+    db
+      .from("fotos")
+      .select("id, url, painel_slug")
+      .neq("painel_slug", PAINEL_ENSAIO)
+      .order("criado_em", { ascending: false })
+      .limit(40),
     db
       .from("cortes")
       .select("id, titulo, video_url, video_web_url, palestrante_id")
+      .neq("painel_slug", PAINEL_ENSAIO)
       .not("video_url", "is", null)
       .order("criado_em", { ascending: false })
       .limit(10),
@@ -27,11 +39,27 @@ export async function GET() {
       agora: momentoAtual(),
       falas: (falas.data ?? []).map((f) => {
         const p = f.palestrante_id ? quem.get(f.palestrante_id) : undefined;
-        return { id: f.id, texto: f.texto, nome: p?.nome ?? null, cargo: p?.cargo ?? null, foto: p?.foto_url ?? null };
+        return {
+          id: f.id,
+          texto: f.texto,
+          nome: p?.nome ?? null,
+          cargo: p?.cargo ?? null,
+          foto: p?.foto_url ?? null,
+        };
       }),
       fotos: fotos.data ?? [],
-      cortes: (cortes.data ?? []).map(({ video_web_url, ...c }) => ({ ...c, video_url: video_web_url ?? c.video_url, nome: c.palestrante_id ? quem.get(c.palestrante_id)?.nome ?? null : null })),
+      cortes: (cortes.data ?? []).map(({ video_web_url, ...c }) => ({
+        ...c,
+        video_url: video_web_url ?? c.video_url,
+        nome: c.palestrante_id
+          ? (quem.get(c.palestrante_id)?.nome ?? null)
+          : null,
+      })),
     },
-    { headers: { "cache-control": "public, s-maxage=30, stale-while-revalidate=60" } },
+    {
+      headers: {
+        "cache-control": "public, s-maxage=30, stale-while-revalidate=60",
+      },
+    },
   );
 }

@@ -50,7 +50,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
         <div className="mt-3 rounded-[28px] border border-white/15 bg-gradient-to-br from-sky/35 via-sea/30 to-wine/30 p-6 text-white shadow-[0_10px_40px_rgba(0,0,0,0.3)] backdrop-blur-xl">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-extrabold">{p.horario}</span>
-            <span className="text-xs font-bold text-white/70 uppercase">{p.numero ? `Painel ${p.numero}` : "Abertura"}</span>
+            <span className="text-xs font-bold text-white/70 uppercase">{p.slug === "ensaio" ? "Ensaio" : p.numero ? `Painel ${p.numero}` : "Abertura"}</span>
             <span className="ml-auto">
               <Status situacao={situacao} />
             </span>

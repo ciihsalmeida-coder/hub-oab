@@ -1,4 +1,5 @@
 import { paineis as programacaoFixa, type Painel as PainelFixo } from "@/data/programacao";
+import { PAINEL_ENSAIO } from "@/lib/ensaio";
 import { supabaseConfigurado } from "@/lib/supabase/config";
 import { supabasePublico } from "@/lib/supabase/publico";
 
@@ -74,7 +75,7 @@ export async function listarPaineis(): Promise<PainelPublico[]> {
   try {
     const db = supabasePublico();
     const [paineis, palestrantes] = await Promise.all([
-      db.from("paineis").select(colunasPainel).order("ordem"),
+      db.from("paineis").select(colunasPainel).neq("slug", PAINEL_ENSAIO).order("ordem"),
       db.from("palestrantes").select(colunasPalestrante).order("ordem"),
     ]);
     if (paineis.error || palestrantes.error || !paineis.data.length) throw paineis.error ?? palestrantes.error;

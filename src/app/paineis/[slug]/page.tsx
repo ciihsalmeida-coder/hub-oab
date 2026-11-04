@@ -8,6 +8,7 @@ import { LinkContado, Rastrear, VideoContado } from "@/components/Rastrear";
 import { VideoSessao } from "@/components/VideoSessao";
 import { congresso, dias, paineis } from "@/data/programacao";
 import { buscarConteudo } from "@/lib/dados";
+import { PAINEL_ENSAIO } from "@/lib/ensaio";
 
 export const revalidate = 60;
 
@@ -18,6 +19,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const painel = paineis.find((p) => p.slug === slug);
+  if (slug === PAINEL_ENSAIO) return { title: "Ensaio da equipe", robots: { index: false, follow: false } };
   return { title: painel ? `${painel.titulo} · XIV Congresso OAB` : "Painel" };
 }
 
