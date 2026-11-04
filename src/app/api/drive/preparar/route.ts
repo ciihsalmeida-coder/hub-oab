@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { driveConfigurado, prepararPastas } from "@/lib/drive";
 import { autorizado } from "@/lib/autorizacao";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 // Cria as pastas de cada painel e de cada palestrante no Drive. Pode rodar de novo sem duplicar.

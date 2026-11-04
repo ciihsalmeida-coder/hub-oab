@@ -38,8 +38,10 @@ export async function prepararPastas() {
     db.from("palestrantes").select("id, painel_slug, nome").order("ordem"),
   ]);
 
-  const registros: { drive_id: string; painel_slug: string; tipo: string; palestrante_id: string | null }[] = [];
+  let total = 0;
   for (const p of paineis ?? []) {
+    // Salva painel por painel: se o tempo acabar no meio, a próxima rodada continua de onde parou.
+    const registros: { drive_id: string; painel_slug: string; tipo: string; palestrante_id: string | null }[] = [];
     const nome = `${String(p.ordem + 1).padStart(2, "0")} · ${p.numero ? `Painel ${p.numero}` : "Abertura"} · ${p.titulo}`.slice(0, 120);
     const painel = await criarPasta(api, nome, PASTA_RAIZ);
     const fotos = await criarPasta(api, "Fotos do painel", painel);
@@ -62,10 +64,11 @@ export async function prepararPastas() {
       const gravacao = await criarPasta(api, s.nome, gravacoes);
       registros.push({ drive_id: gravacao, painel_slug: p.slug, tipo: "midia_palestrante", palestrante_id: s.id });
     }
+    const r = await db.from("pastas_drive").upsert(registros, { onConflict: "painel_slug,tipo,palestrante_id" });
+    if (r.error) throw r.error;
+    total += registros.length;
   }
-  const r = await db.from("pastas_drive").upsert(registros, { onConflict: "painel_slug,tipo,palestrante_id" });
-  if (r.error) throw r.error;
-  return registros.length;
+  return total;
 }
 
 type Resultado = { copiados: number; erros: number; pendentes: number; paineis: string[] };
