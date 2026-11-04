@@ -83,4 +83,8 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 7. ✅ Filtro por eixo na home (`ListaPaineis`) e vídeo da sessão completa via YouTube não listado
    (`paineis.video_sessao_url`, campo no editor do painel; capa leve até tocar, youtube-nocookie).
    Publica ao salvar (não passa pela aprovação).
-8. Teste de carga antes de 08/11.
+8. ✅ (04/11) Métricas com pessoas únicas (código aleatório no localStorage, 30 dias, sem IP; views
+   `pessoas_por_dia`, `pessoas_por_alvo`, `pessoas_total`) e play de vídeo (`tocou_video`). Kit com 3 tipos de
+   card: frase, "palestrante" (sem frase) e moldura livre (`?modelo=participacao|fundo`). LGPD: transcrição apagada
+   da AssemblyAI depois de salva. Fotos: JPEG 90, 4:4:4, sRGB.
+9. Teste de carga antes de 08/11.

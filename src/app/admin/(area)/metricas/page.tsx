@@ -41,31 +41,37 @@ function Ranking({ itens }: { itens: { rotulo: string; valor: number }[] }) {
 
 export default async function Metricas() {
   const { db } = await exigirEquipe();
-  const [metricas, paineis, palestrantes, kits, cadastros] = await Promise.all([
+  const [metricas, paineis, palestrantes, kits, cadastros, pessoasTotal, pessoasDia, pessoasAlvo] = await Promise.all([
     db.from("metricas").select("tipo, alvo, dia, total"),
     db.from("paineis").select("slug, numero, titulo").order("ordem"),
     db.from("palestrantes").select("slug, nome"),
     db.from("kits").select("palestrante_id, enviado_em").not("enviado_em", "is", null),
     db.from("cadastros").select("id", { count: "exact", head: true }),
+    db.from("pessoas_total").select("pessoas").maybeSingle(),
+    db.from("pessoas_por_dia").select("dia, pessoas"),
+    db.from("pessoas_por_alvo").select("tipo, alvo, pessoas").eq("tipo", "visita_painel"),
   ]);
   const linhas = (metricas.data ?? []) as Linha[];
 
   const visitas = soma(linhas, VISITAS);
-  const downloads = soma(linhas, DOWNLOADS);
   const kitsAbertos = new Set(linhas.filter((l) => l.tipo === "visita_kit").map((l) => l.alvo)).size;
   const kitsComDownload = new Set(linhas.filter((l) => DOWNLOADS.includes(l.tipo) && linhas.some((k) => k.tipo === "visita_kit" && k.alvo === l.alvo)).map((l) => l.alvo)).size;
   const totalPalestrantes = (palestrantes.data ?? []).length;
 
-  // Visitas por dia (últimos 14 dias com dados).
-  const porDia = new Map<string, number>();
-  for (const l of linhas) if (VISITAS.includes(l.tipo)) porDia.set(l.dia, (porDia.get(l.dia) ?? 0) + l.total);
-  const dias = [...porDia.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-14);
+  const pessoas = pessoasTotal.data?.pessoas ?? 0;
+  const cliques = soma(linhas, [...DOWNLOADS, "compartilhou", "abriu_galeria", "tocou_video"]);
+
+  // Pessoas únicas por dia (últimos 14 dias com dados).
+  const dias = (pessoasDia.data ?? [])
+    .map((d) => [d.dia as string, d.pessoas as number] as const)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-14);
   const maxDia = Math.max(1, ...dias.map(([, v]) => v));
 
   const porPainel = (paineis.data ?? [])
     .map((p) => ({
       rotulo: `${p.numero ? `P${p.numero}` : "Abertura"} · ${p.titulo}`,
-      valor: linhas.filter((l) => l.tipo === "visita_painel" && l.alvo === p.slug).reduce((t, l) => t + l.total, 0),
+      valor: (pessoasAlvo.data ?? []).find((x) => x.alvo === p.slug)?.pessoas ?? 0,
     }))
     .filter((p) => p.valor > 0)
     .sort((a, b) => b.valor - a.valor);
@@ -95,6 +101,7 @@ export default async function Metricas() {
     ["baixou_foto", "Fotos baixadas"],
     ["compartilhou", "Compartilhamentos"],
     ["abriu_galeria", "Cliques na galeria de fotos"],
+    ["tocou_video", "Vídeos assistidos (play)"],
     ["abriu_mural", "Aberturas do mural"],
   ];
 
@@ -102,23 +109,26 @@ export default async function Metricas() {
     <div className="space-y-6">
       <div>
         <h1 className="text-4xl font-extrabold tracking-tight">Métricas 📊</h1>
-        <p className="mt-1 text-muted">Contagem anônima de acessos e downloads. Atualiza a cada visita.</p>
+        <p className="mt-1 text-muted">
+          Contagem anônima. “Pessoas” conta cada celular ou computador uma vez só; “cliques” soma downloads, plays,
+          compartilhamentos e galeria.
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <Numero icone="👀" valor={visitas} rotulo="visitas ao hub" destaque />
+        <Numero icone="🙋" valor={pessoas} rotulo="pessoas únicas" destaque />
+        <Numero icone="👀" valor={visitas} rotulo="páginas abertas" />
+        <Numero icone="👆" valor={cliques} rotulo="cliques" />
         <Numero icone="🎁" valor={`${kitsAbertos}/${totalPalestrantes}`} rotulo="kits abertos" />
-        <Numero icone="⬇️" valor={downloads} rotulo="downloads" />
         <Numero icone="👥" valor={cadastros.count ?? 0} rotulo="cadastros" />
-        <Numero icone="📸" valor={soma(linhas, ["abriu_galeria"])} rotulo="cliques na galeria" />
       </div>
 
       <Cartao>
-        <TituloCartao icone="📅" titulo="Visitas por dia" ajuda="Página inicial + páginas dos painéis" />
+        <TituloCartao icone="📅" titulo="Pessoas por dia" ajuda="Cada pessoa conta uma vez por dia" />
         {dias.length ? (
           <div className="flex h-44 items-end gap-1.5">
             {dias.map(([dia, v]) => (
-              <div key={dia} className="group flex h-full flex-1 flex-col items-center justify-end gap-1" title={`${rotuloDia(dia)}: ${v} visita(s)`}>
+              <div key={dia} className="group flex h-full flex-1 flex-col items-center justify-end gap-1" title={`${rotuloDia(dia)}: ${v} pessoa(s)`}>
                 <span className="text-[11px] font-bold opacity-0 transition group-hover:opacity-100">{v}</span>
                 <div className="w-full max-w-6 rounded-t-[4px]" style={{ height: `${Math.max(2, (v / maxDia) * 100)}%`, background: COR }} />
                 <span className="text-[10px] text-muted">{rotuloDia(dia)}</span>
@@ -126,13 +136,13 @@ export default async function Metricas() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted">Ainda sem visitas registradas.</p>
+          <p className="text-sm text-muted">Ainda sem pessoas registradas.</p>
         )}
       </Cartao>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Cartao>
-          <TituloCartao icone="🎙️" titulo="Painéis mais vistos" />
+          <TituloCartao icone="🎙️" titulo="Painéis mais vistos" ajuda="Pessoas únicas em cada página" />
           <Ranking itens={porPainel} />
         </Cartao>
 

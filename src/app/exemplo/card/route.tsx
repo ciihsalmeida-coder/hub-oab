@@ -5,5 +5,5 @@ import { falas } from "../dados";
 export function GET(request: Request) {
   const i = Number(new URL(request.url).searchParams.get("i") ?? 0);
   const fala = falas[i] ?? falas[0];
-  return gerarCard({ texto: fala.texto, nome: fala.quem, cargo: fala.cargo });
+  return gerarCard({ modelo: "frase", texto: fala.texto, nome: fala.quem, cargo: fala.cargo });
 }

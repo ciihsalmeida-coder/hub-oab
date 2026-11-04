@@ -27,8 +27,9 @@ export default function Privacidade() {
           aberto e não exige cadastro.
         </Bloco>
         <Bloco titulo="Contagem de acessos">
-          O site conta, de forma anônima, quantas vezes as páginas são abertas e os materiais baixados (sem nome, e-mail,
-          endereço IP ou qualquer dado que identifique você), para medir o alcance do congresso.
+          O site conta, de forma anônima, quantas pessoas abrem as páginas e baixam os materiais, para medir o alcance do
+          congresso. Para não contar a mesma pessoa duas vezes, o seu navegador guarda um código aleatório, trocado a cada
+          30 dias. Não guardamos nome, e-mail, endereço IP nem qualquer dado que identifique você.
         </Bloco>
         <Bloco titulo="Para que usamos">
           Para enviar a você os resumos, vídeos e materiais do XIV Congresso Nacional de Direito Marítimo, Portuário e

@@ -16,7 +16,8 @@ export async function tratarFoto(original: Buffer, auto: boolean) {
       .linear([0.99, 1.0, 1.03], [-1, 0, 3])
       .gamma(1.05);
   }
-  const grande = await base.jpeg({ quality: 86, mozjpeg: true }).toBuffer();
+  // Qualidade de entrega: cor em sRGB, sem perder detalhe de cor (4:4:4).
+  const grande = await base.toColorspace("srgb").jpeg({ quality: 90, mozjpeg: true, chromaSubsampling: "4:4:4" }).toBuffer();
   const mini = await sharp(grande).resize(640, 640, { fit: "inside" }).jpeg({ quality: 76, mozjpeg: true }).toBuffer();
   return { grande, mini };
 }

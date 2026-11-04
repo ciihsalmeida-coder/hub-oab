@@ -143,6 +143,10 @@ export async function processarProximo(): Promise<{ envio?: string; etapa?: stri
         texto: u.text,
       }));
       await mudarEtapa(envio.id, { etapa: "escrevendo", transcricao: { falas, duracao: t.audio_duration } });
+      // LGPD: a transcrição já está guardada aqui; apaga a cópia (texto e áudio) dos servidores da AssemblyAI.
+      await assembly(`/transcript/${envio.assemblyai_id}`, { method: "DELETE" }).catch((e) =>
+        console.error("Não consegui apagar a transcrição na AssemblyAI", e),
+      );
       return { envio: envio.id, etapa: "escrevendo" };
     }
 

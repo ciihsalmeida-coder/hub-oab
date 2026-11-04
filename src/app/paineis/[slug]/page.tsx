@@ -4,7 +4,7 @@ import { Cadastro } from "@/components/Cadastro";
 import { GaleriaBotao } from "@/components/GaleriaBotao";
 import { Assinatura, FaixaLocal, Voltar } from "@/components/Marca";
 import { Palestrante } from "@/components/Palestrante";
-import { LinkContado, Rastrear } from "@/components/Rastrear";
+import { LinkContado, Rastrear, VideoContado } from "@/components/Rastrear";
 import { VideoSessao } from "@/components/VideoSessao";
 import { congresso, dias, paineis } from "@/data/programacao";
 import { buscarConteudo } from "@/lib/dados";
@@ -87,7 +87,8 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
               {painel.cortes.map((c) => (
                 <figure key={c.id} className="w-64 shrink-0 snap-start overflow-hidden rounded-2xl bg-card shadow-sm">
                   {c.videoUrl && (
-                    <video
+                    <VideoContado
+                      alvo={painel.slug}
                       src={c.videoWebUrl ?? undefined}
                       poster={c.capaUrl ?? undefined}
                       controls
