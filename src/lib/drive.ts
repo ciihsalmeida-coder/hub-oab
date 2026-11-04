@@ -46,16 +46,21 @@ export async function prepararPastas() {
     const cortes = await criarPasta(api, "Cortes de vídeo", painel);
     const porPalestrante = await criarPasta(api, "Fotos por palestrante", painel);
     const midia = await criarPasta(api, "Áudio e vídeo do painel", painel);
+    const gravacoes = await criarPasta(api, "Gravações por palestrante", painel);
     registros.push(
       { drive_id: painel, painel_slug: p.slug, tipo: "painel", palestrante_id: null },
       { drive_id: fotos, painel_slug: p.slug, tipo: "fotos", palestrante_id: null },
       { drive_id: cortes, painel_slug: p.slug, tipo: "cortes", palestrante_id: null },
       { drive_id: porPalestrante, painel_slug: p.slug, tipo: "palestrantes", palestrante_id: null },
       { drive_id: midia, painel_slug: p.slug, tipo: "midia", palestrante_id: null },
+      { drive_id: gravacoes, painel_slug: p.slug, tipo: "gravacoes", palestrante_id: null },
     );
     for (const s of (palestrantes ?? []).filter((x) => x.painel_slug === p.slug)) {
       const id = await criarPasta(api, s.nome, porPalestrante);
       registros.push({ drive_id: id, painel_slug: p.slug, tipo: "palestrante", palestrante_id: s.id });
+      // Gravação individual: tudo o que vier desta pasta é deste palestrante.
+      const gravacao = await criarPasta(api, s.nome, gravacoes);
+      registros.push({ drive_id: gravacao, painel_slug: p.slug, tipo: "midia_palestrante", palestrante_id: s.id });
     }
   }
   const r = await db.from("pastas_drive").upsert(registros, { onConflict: "painel_slug,tipo,palestrante_id" });
@@ -74,7 +79,7 @@ export async function sincronizar(orcamentoMs = 45_000): Promise<Resultado> {
   const resultado: Resultado = { copiados: 0, erros: 0, pendentes: 0, paineis: [] };
 
   const [{ data: pastas }, { data: fotos }, { data: cortes }, { data: falhas }] = await Promise.all([
-    db.from("pastas_drive").select("drive_id, painel_slug, tipo, palestrante_id").in("tipo", ["fotos", "cortes", "palestrante", "midia"]),
+    db.from("pastas_drive").select("drive_id, painel_slug, tipo, palestrante_id").in("tipo", ["fotos", "cortes", "palestrante", "midia", "midia_palestrante"]),
     db.from("fotos").select("origem_drive_id").not("origem_drive_id", "is", null),
     db.from("cortes").select("origem_drive_id").not("origem_drive_id", "is", null),
     db.from("drive_erros").select("drive_id, tentativas"),
@@ -112,7 +117,7 @@ export async function sincronizar(orcamentoMs = 45_000): Promise<Resultado> {
       continue;
     }
     try {
-      if (arquivo.pasta.tipo === "midia") await registrarEnvio(arquivo, arquivo.pasta);
+      if (arquivo.pasta.tipo === "midia" || arquivo.pasta.tipo === "midia_palestrante") await registrarEnvio(arquivo, arquivo.pasta);
       else if (arquivo.mimeType?.startsWith("image/")) await copiarFoto(api, arquivo, arquivo.pasta);
       else await copiarVideo(api, arquivo, arquivo.pasta);
       await db.from("drive_erros").delete().eq("drive_id", arquivo.id!);
@@ -134,7 +139,7 @@ export async function sincronizar(orcamentoMs = 45_000): Promise<Resultado> {
   return resultado;
 }
 
-// Áudio/vídeo do painel inteiro: não copia, só registra para a IA processar direto do Drive.
+// Áudio/vídeo (do painel inteiro ou de um palestrante): não copia, só registra para a IA processar direto do Drive.
 async function registrarEnvio(arquivo: drive_v3.Schema$File, pasta: Pasta) {
   const tipo = arquivo.mimeType?.startsWith("audio/") ? "audio" : "video";
   const r = await supabaseAdmin().from("envios").insert({
@@ -143,6 +148,7 @@ async function registrarEnvio(arquivo: drive_v3.Schema$File, pasta: Pasta) {
     caminho: `drive:${arquivo.id}`,
     origem_drive_id: arquivo.id,
     nome: arquivo.name,
+    palestrante_id: pasta.tipo === "midia_palestrante" ? pasta.palestrante_id : null,
   });
   if (r.error) throw r.error;
 }

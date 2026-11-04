@@ -214,6 +214,33 @@ def main():
     otimizar()
 
 
+def escolher_fontes(cortes, envios):
+    """Agrupa os cortes pela gravação de onde vieram e acha, para cada grupo, a transcrição e o vídeo.
+
+    Cada palestrante pode ter a própria gravação (envio com palestrante_id): o vídeo usado é o
+    dessa mesma pessoa. Cortes antigos, sem envio_id, usam a gravação geral do painel.
+    """
+    por_id = {e["id"]: e for e in envios}
+    grupos = {}
+    for corte in cortes:
+        grupos.setdefault(corte.get("envio_id"), []).append(corte)
+    for envio_id, lista in grupos.items():
+        base = por_id.get(envio_id) if envio_id else None
+        if not base:
+            base = next((e for e in envios if e["etapa"] == "pronto" and e.get("transcricao") and not e.get("palestrante_id")), None)
+        if not base or not base.get("transcricao"):
+            yield lista, None, None
+            continue
+        if base["tipo"] == "video":
+            yield lista, base, base  # transcrito do próprio vídeo: não precisa sincronizar
+            continue
+        videos = [e for e in envios if e["tipo"] == "video" and e.get("palestrante_id") == base.get("palestrante_id")]
+        # Se houver mais de um vídeo, prefere o de mesmo nome do áudio transcrito (ex.: painel.mp3 e painel.mp4).
+        radical = os.path.splitext(base["nome"] or "")[0]
+        video = next((v for v in videos if os.path.splitext(v["nome"] or "")[0] == radical), videos[0] if videos else None)
+        yield lista, base, video
+
+
 def cortar():
     cortes = consulta(
         "cortes",
@@ -222,7 +249,7 @@ def cortar():
             "origem": "eq.auto",
             "video_url": "is.null",
             "tentativas": f"lt.{MAX_TENTATIVAS}",
-            "select": "id,inicio_ms,fim_ms,tentativas",
+            "select": "id,inicio_ms,fim_ms,tentativas,envio_id",
             "order": "ordem",
         },
     )
@@ -232,20 +259,24 @@ def cortar():
 
     envios = consulta(
         "envios",
-        {"painel_slug": f"eq.{PAINEL}", "select": "tipo,nome,origem_drive_id,etapa,transcricao", "order": "criado_em.desc"},
+        {
+            "painel_slug": f"eq.{PAINEL}",
+            "etapa": "neq.erro",
+            "select": "id,tipo,nome,origem_drive_id,etapa,transcricao,palestrante_id",
+            "order": "criado_em.desc",
+        },
     )
-    base = next((e for e in envios if e["etapa"] == "pronto" and e.get("transcricao")), None)
-    videos = [e for e in envios if e["tipo"] == "video"]
-    # Se houver mais de um vídeo, prefere o de mesmo nome do áudio transcrito (ex.: painel.mp3 e painel.mp4).
-    radical = os.path.splitext(base["nome"] or "")[0] if base else ""
-    video = next((v for v in videos if os.path.splitext(v["nome"] or "")[0] == radical), videos[0] if videos else None)
-    if not video or not base:
-        print("Falta o vídeo ou a transcrição do painel.")
-        return
+    for lista, base, video in escolher_fontes(cortes, envios):
+        if not base or not video:
+            print(f"Falta o vídeo ou a transcrição de {len(lista)} corte(s); ficam esperando.")
+            continue
+        cortar_grupo(lista, base, video)
 
+
+def cortar_grupo(cortes, base, video):
     with tempfile.TemporaryDirectory() as pasta:
         caminho_video = os.path.join(pasta, "painel.mp4")
-        print("Baixando vídeo do Drive…")
+        print(f"Baixando vídeo do Drive: {video['nome']}…")
         baixar_drive(video["origem_drive_id"], caminho_video)
         total = duracao(caminho_video)
         print(f"Vídeo: {video['nome']} ({total / 60:.1f} min)")
@@ -253,7 +284,7 @@ def cortar():
         atraso = 0.0
         if base["tipo"] == "audio":
             caminho_audio = os.path.join(pasta, "mesa")
-            print("Baixando áudio da mesa para sincronizar…")
+            print("Baixando o áudio para sincronizar…")
             baixar_drive(base["origem_drive_id"], caminho_audio)
             atraso, confianca = atraso_video(caminho_audio, caminho_video)
             print(f"Atraso calculado: {atraso:+.2f}s (confiança {confianca:.2f})")

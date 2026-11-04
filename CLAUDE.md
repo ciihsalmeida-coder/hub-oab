@@ -91,4 +91,11 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
    `pessoas_por_dia`, `pessoas_por_alvo`, `pessoas_total`) e play de vídeo (`tocou_video`). Kit com 3 tipos de
    card: frase, "palestrante" (sem frase) e moldura livre (`?modelo=participacao|fundo`). LGPD: transcrição apagada
    da AssemblyAI depois de salva. Fotos: JPEG 90, 4:4:4, sRGB.
-9. Teste de carga antes de 08/11.
+9. ✅ (04/11) Gravação por palestrante: pasta "Gravações por palestrante/<nome>" em cada painel (pastas_drive
+   tipo `midia_palestrante`). envios.palestrante_id; falas/cortes.envio_id. Cada fonte (geral ou palestrante) é
+   transcrita e refeita sem apagar as outras; falas/cortes vão direto para a pessoa. Resumo do painel = gravação geral
+   se houver; senão, resumo combinado das individuais (`resumoDasGravacoesIndividuais`). cortar.py agrupa por envio
+   (`escolher_fontes`): vídeo da mesma pessoa. Vídeo grande vai do Drive à AssemblyAI em stream (https.request;
+   fetch do Node bufferiza tudo). Painel `ensaio` (fora do público) para testes; apagar antes do evento.
+10. Teste de carga (`.github/workflows/carga.yml`, manual; resultados em `testes_carga`): de uma máquina só a
+   Vercel bloqueia com 403 após ~100 pedidos (proteção contra robô). Não mede capacidade real; páginas são ISR/CDN.

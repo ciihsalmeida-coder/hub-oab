@@ -22,11 +22,10 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
     db.from("fotos").select("id, url, miniatura_url, palestrante_id, status").eq("painel_slug", slug).order("ordem"),
     db
       .from("envios")
-      .select("tipo, nome, etapa, erro, atualizado_em")
+      .select("id, tipo, nome, etapa, erro, atualizado_em, palestrante_id")
       .eq("painel_slug", slug)
       .neq("etapa", "ignorado")
-      .order("criado_em", { ascending: false })
-      .limit(1),
+      .order("criado_em", { ascending: false }),
     db
       .from("cortes")
       .select("id, titulo, inicio_ms, fim_ms, legenda_sugerida, video_url, palestrante_id, erro, tentativas, status")
@@ -38,8 +37,14 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
   const todos = [...(falas.data ?? []), ...(fotos.data ?? []), ...(cortes.data ?? [])];
   const pendentes = todos.filter((x) => x.status === "rascunho").length;
   const situacao = situacaoDoPainel(p, pendentes, todos.length);
-  const envio = envios.data?.[0];
   const lista = palestrantes.data ?? [];
+  // Uma linha de status por gravação: a geral do painel e a de cada palestrante gravado à parte.
+  const porFonte = new Map<string, NonNullable<typeof envios.data>[number]>();
+  for (const e of envios.data ?? []) if (!porFonte.has(e.palestrante_id ?? "geral")) porFonte.set(e.palestrante_id ?? "geral", e);
+  const gravacoes = [...porFonte.values()].map((e) => ({
+    ...e,
+    rotulo: e.palestrante_id ? `Gravação de ${lista.find((x) => x.id === e.palestrante_id)?.nome ?? "palestrante"}` : null,
+  }));
 
   return (
     <div className="space-y-6">
@@ -64,7 +69,15 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
         </div>
       </div>
 
-      <StatusIA envio={envio} slug={slug} />
+      {gravacoes.length ? (
+        <div className="space-y-3">
+          {gravacoes.map((g) => (
+            <StatusIA key={g.id} envio={g} slug={slug} />
+          ))}
+        </div>
+      ) : (
+        <StatusIA slug={slug} />
+      )}
 
       <Editor
         slug={slug}
@@ -105,14 +118,16 @@ const etapas: Record<string, [string, string]> = {
   erro: ["⚠️", "Algo deu errado no processamento."],
 };
 
-function StatusIA({ envio, slug }: { envio?: { tipo: string; nome: string | null; etapa: string; erro: string | null }; slug: string }) {
+type Gravacao = { id: string; tipo: string; nome: string | null; etapa: string; erro: string | null; rotulo: string | null };
+
+function StatusIA({ envio, slug }: { envio?: Gravacao; slug: string }) {
   if (!envio) {
     return (
       <Cartao className="border-dashed">
         <TituloCartao
           icone="🎙️"
           titulo="Aguardando o áudio do painel"
-          ajuda="Quando o áudio for colocado na pasta “Áudio e vídeo do painel” do Drive, a IA começa sozinha."
+          ajuda="Coloque o áudio do painel em “Áudio e vídeo do painel”, ou a gravação de cada palestrante em “Gravações por palestrante”, no Drive. A IA começa sozinha."
         />
       </Cartao>
     );
@@ -127,8 +142,8 @@ function StatusIA({ envio, slug }: { envio?: { tipo: string; nome: string | null
       <TituloCartao
         icone={icone}
         titulo={texto}
-        ajuda={`Arquivo: ${envio.nome ?? "—"}`}
-        acao={["pronto", "erro"].includes(envio.etapa) ? <Refazer slug={slug} /> : undefined}
+        ajuda={`${envio.rotulo ? `${envio.rotulo} · ` : ""}Arquivo: ${envio.nome ?? "—"}`}
+        acao={["pronto", "erro"].includes(envio.etapa) ? <Refazer slug={slug} envioId={envio.id} /> : undefined}
       />
       {envio.erro && <p className="font-semibold text-red-300">{envio.erro}</p>}
     </section>

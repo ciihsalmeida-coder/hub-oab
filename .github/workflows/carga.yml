@@ -1,11 +1,8 @@
-# Teste de carga do hub: roda quando este arquivo muda ou pelo botão "Run workflow".
+# Teste de carga do hub: roda só pelo botão "Run workflow" no GitHub (Actions → Teste de carga).
 name: Teste de carga
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: [".github/workflows/carga.yml", "scripts/carga/**"]
 
 jobs:
   carga:

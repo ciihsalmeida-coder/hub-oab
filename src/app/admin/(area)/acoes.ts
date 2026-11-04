@@ -125,18 +125,15 @@ export async function sair() {
 }
 
 // Reprocessa o áudio mais recente do painel (a transcrição já paga é reaproveitada).
-export async function refazerComIA(slug: string) {
+// Refaz uma gravação específica (envioId) ou, sem ela, a mais recente do painel.
+export async function refazerComIA(slug: string, envioId?: string) {
   const { db, membro } = await exigirEquipe();
   if (!membro) throw new Error("Sem permissão.");
-  const { data: envio } = await db
-    .from("envios")
-    .select("id, assemblyai_id")
-    .eq("painel_slug", slug)
-    .eq("tipo", "audio")
-    .order("criado_em", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (!envio) throw new Error("Nenhum áudio deste painel no Drive ainda.");
+  const busca = db.from("envios").select("id, assemblyai_id").eq("painel_slug", slug);
+  const { data: envio } = await (envioId
+    ? busca.eq("id", envioId).maybeSingle()
+    : busca.neq("etapa", "ignorado").order("criado_em", { ascending: false }).limit(1).maybeSingle());
+  if (!envio) throw new Error("Nenhuma gravação deste painel no Drive ainda.");
   const r = await db
     .from("envios")
     .update({ etapa: envio.assemblyai_id ? "transcrevendo" : "recebido", erro: null, bloqueado_ate: null, tentativas: 0 })

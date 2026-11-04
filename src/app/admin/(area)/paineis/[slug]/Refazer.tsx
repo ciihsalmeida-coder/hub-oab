@@ -7,14 +7,17 @@ import { refazerComIA, refazerCortes } from "../../acoes";
 export function Refazer({
   slug,
   cortes = false,
+  envioId,
 }: {
   slug: string;
   cortes?: boolean;
+  /** Gravação a refazer; sem ela, a mais recente do painel. */
+  envioId?: string;
 }) {
-  const acao = cortes ? refazerCortes : refazerComIA;
+  const acao = () => (cortes ? refazerCortes(slug) : refazerComIA(slug, envioId));
   const pergunta = cortes
     ? "Cortar os vídeos de novo? Os cortes automáticos atuais serão substituídos."
-    : "Refazer o resumo, as falas e os cortes com a IA? O rascunho atual será substituído.";
+    : "Refazer com a IA? As falas e os cortes desta gravação serão substituídos.";
   const router = useRouter();
   const [aviso, setAviso] = useState("");
   const [pendente, iniciar] = useTransition();
@@ -26,7 +29,7 @@ export function Refazer({
           if (!confirm(pergunta)) return;
           iniciar(async () => {
             try {
-              await acao(slug);
+              await acao();
               setAviso("Na fila. Recarregue em alguns minutos.");
               router.refresh();
             } catch (e) {

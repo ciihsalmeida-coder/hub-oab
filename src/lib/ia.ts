@@ -56,7 +56,11 @@ type Envio = {
   nome: string | null;
   tentativas: number;
   criado_em: string;
+  /** Preenchido quando a gravação é individual (pasta "Gravações por palestrante"). */
+  palestrante_id: string | null;
 };
+
+const COLUNAS_ENVIO = "id, painel_slug, tipo, origem_drive_id, etapa, assemblyai_id, nome, tentativas, criado_em, palestrante_id";
 
 const MAX_TENTATIVAS = 4;
 const ESPERA_AUDIO_MS = 15 * 60_000; // um vídeo só é transcrito se o áudio não chegar nesse tempo
@@ -82,26 +86,29 @@ async function reservarEnvio(): Promise<Envio | null> {
       .update({ bloqueado_ate: new Date(Date.now() + 5 * 60_000).toISOString() })
       .eq("id", c.id)
       .or(`bloqueado_ate.is.null,bloqueado_ate.lt.${agora}`)
-      .select("id, painel_slug, tipo, origem_drive_id, etapa, assemblyai_id, nome, tentativas, criado_em")
+      .select(COLUNAS_ENVIO)
       .maybeSingle();
     if (data) return data as Envio;
   }
   return null;
 }
 
-// Um painel é transcrito uma vez só: vale o áudio mais recente; vídeo só se não houver áudio.
+// Cada "fonte" (a gravação geral do painel ou a de um palestrante) é transcrita uma vez só:
+// vale o áudio mais recente daquela fonte; vídeo só se ela não tiver áudio.
 async function motivoParaIgnorar(envio: Envio) {
-  const { data: outros } = await supabaseAdmin()
+  let busca = supabaseAdmin()
     .from("envios")
     .select("id, tipo, criado_em")
     .eq("painel_slug", envio.painel_slug)
     .neq("id", envio.id)
-    .neq("etapa", "ignorado")
-    .order("criado_em", { ascending: false });
+    .neq("etapa", "ignorado");
+  busca = envio.palestrante_id ? busca.eq("palestrante_id", envio.palestrante_id) : busca.is("palestrante_id", null);
+  const { data: outros } = await busca.order("criado_em", { ascending: false });
   const { data: este } = await supabaseAdmin().from("envios").select("criado_em").eq("id", envio.id).single();
   const audios = (outros ?? []).filter((o) => o.tipo === "audio");
-  if (envio.tipo === "video" && audios.length) return "Vídeo guardado para os cortes; a transcrição usa o áudio do painel.";
-  if (envio.tipo === "audio" && audios.some((o) => o.criado_em > (este?.criado_em ?? ""))) return "Há um áudio mais novo deste painel; ele é o que vale.";
+  const de = envio.palestrante_id ? "deste palestrante" : "do painel";
+  if (envio.tipo === "video" && audios.length) return `Vídeo guardado para os cortes; a transcrição usa o áudio ${de}.`;
+  if (envio.tipo === "audio" && audios.some((o) => o.criado_em > (este?.criado_em ?? ""))) return `Há um áudio mais novo ${de}; ele é o que vale.`;
   return null;
 }
 
@@ -282,13 +289,18 @@ async function escreverTextos(envio: Envio) {
   const [{ data: dados }, { data: painel }, { data: palestrantes }] = await Promise.all([
     db.from("envios").select("transcricao").eq("id", envio.id).single(),
     db.from("paineis").select("titulo, numero, area").eq("slug", envio.painel_slug).single(),
-    db.from("palestrantes").select("id, nome, cargo").eq("painel_slug", envio.painel_slug).order("ordem"),
+    db.from("palestrantes").select("id, nome, cargo, ordem").eq("painel_slug", envio.painel_slug).order("ordem"),
   ]);
   const falas = (dados?.transcricao?.falas ?? []) as { falante: string; inicio: number; fim: number; texto: string }[];
   if (!falas.length) throw new Error("A transcrição veio vazia. Confira se o áudio tem fala.");
 
+  // Gravação individual: a pessoa já é conhecida; a IA não precisa adivinhar quem falou.
+  const individual = envio.palestrante_id ? (palestrantes ?? []).find((p) => p.id === envio.palestrante_id) ?? null : null;
   const transcricao = falas.map((f) => `[${f.inicio}-${f.fim}] Falante ${f.falante}: ${f.texto}`).join("\n");
-  const lista = (palestrantes ?? []).map((p) => `- ${p.nome} (${p.cargo})`).join("\n");
+  const lista = (individual ? [individual] : (palestrantes ?? [])).map((p) => `- ${p.nome} (${p.cargo})`).join("\n");
+  const aviso = individual
+    ? `\nEsta é a gravação individual de ${individual.nome}. Todas as falas, cortes e a legenda são dessa pessoa: use exatamente esse nome. O resumo e os pontos devem tratar só do que essa pessoa disse.\n`
+    : "";
 
   const anthropic = new Anthropic();
   const stream = anthropic.beta.messages.stream({
@@ -305,7 +317,7 @@ async function escreverTextos(envio: Envio) {
 
 Palestrantes oficiais:
 ${lista}
-
+${aviso}
 <transcricao>
 ${transcricao}
 </transcricao>`,
@@ -319,43 +331,60 @@ ${transcricao}
   const resultado: Resultado = Resultado.parse(JSON.parse(texto));
 
   const idPorNome = new Map((palestrantes ?? []).map((p) => [p.nome, p.id]));
-  // Painel com um único palestrante (ex.: palestra magna): tudo é dele.
-  const unico = palestrantes?.length === 1 ? palestrantes[0].id : null;
-  const id = (nome: string | null) => (nome ? idPorNome.get(nome) ?? unico : unico);
+  // Painel com um único palestrante (ex.: palestra magna) ou gravação individual: tudo é dele.
+  const unico = individual?.id ?? (palestrantes?.length === 1 ? palestrantes[0].id : null);
+  const id = (nome: string | null) => (individual ? individual.id : nome ? idPorNome.get(nome) ?? unico : unico);
 
-  const r1 = await db
-    .from("paineis")
-    .update({ resumo: resultado.resumo, pontos: resultado.pontos.slice(0, 3), status_texto: "rascunho", atualizado_em: new Date().toISOString() })
-    .eq("slug", envio.painel_slug);
-  if (r1.error) throw r1.error;
+  // "Refazer" uma gravação só substitui o que veio dela (ou da mesma fonte): as dos outros palestrantes ficam.
+  let fonte = db.from("envios").select("id").eq("painel_slug", envio.painel_slug);
+  fonte = envio.palestrante_id ? fonte.eq("palestrante_id", envio.palestrante_id) : fonte.is("palestrante_id", null);
+  const { data: daFonte } = await fonte;
+  const ids = (daFonte ?? []).map((e) => e.id);
+  const deFonte = (tabela: "falas" | "cortes") => {
+    const q = db.from(tabela).delete().eq("painel_slug", envio.painel_slug);
+    // Itens antigos, de antes das gravações individuais, não têm envio_id: pertencem à gravação geral.
+    return envio.palestrante_id ? q.in("envio_id", ids) : q.or(`envio_id.is.null,envio_id.in.(${ids.join(",")})`);
+  };
 
-  await db.from("falas").delete().eq("painel_slug", envio.painel_slug);
+  // Resumo do painel: da gravação geral, quando houver; senão, a soma das gravações individuais.
+  const resumoPainel = individual ? await resumoDasGravacoesIndividuais(envio.painel_slug, resultado) : resultado;
+  if (resumoPainel) {
+    const r1 = await db
+      .from("paineis")
+      .update({ resumo: resumoPainel.resumo, pontos: resumoPainel.pontos.slice(0, 3), status_texto: "rascunho", atualizado_em: new Date().toISOString() })
+      .eq("slug", envio.painel_slug);
+    if (r1.error) throw r1.error;
+  }
+
+  await deFonte("falas");
   if (resultado.falas.length) {
     const r2 = await db.from("falas").insert(
       resultado.falas.map((f, i) => ({
         painel_slug: envio.painel_slug,
         palestrante_id: id(f.palestrante),
+        envio_id: envio.id,
         texto: f.texto,
         inicio_ms: Math.round(f.inicio_ms),
-        ordem: i,
+        ordem: (individual ? 100 * (individual.ordem ?? 0) : 0) + i,
       })),
     );
     if (r2.error) throw r2.error;
   }
 
   // Cortes sugeridos: entram sem vídeo; o robô de edição (ou a equipe) preenche depois.
-  await db.from("cortes").delete().eq("painel_slug", envio.painel_slug).eq("origem", "auto");
+  await deFonte("cortes").eq("origem", "auto");
   if (resultado.cortes.length) {
     const r3 = await db.from("cortes").insert(
       resultado.cortes.map((c, i) => ({
         painel_slug: envio.painel_slug,
         palestrante_id: id(c.palestrante),
+        envio_id: envio.id,
         titulo: c.titulo,
         inicio_ms: Math.round(c.inicio_ms),
         fim_ms: Math.round(c.fim_ms),
         legenda_sugerida: c.legenda_instagram,
         origem: "auto",
-        ordem: i,
+        ordem: (individual ? 100 * (individual.ordem ?? 0) : 0) + i,
       })),
     );
     if (r3.error) throw r3.error;
@@ -365,4 +394,68 @@ ${transcricao}
     const pid = id(l.palestrante);
     if (pid) await db.from("palestrantes").update({ legenda_kit: l.legenda }).eq("id", pid);
   }
+}
+
+const esquemaResumo = {
+  type: "object",
+  additionalProperties: false,
+  required: ["pontos", "resumo"],
+  properties: {
+    pontos: esquema.properties.pontos,
+    resumo: esquema.properties.resumo,
+  },
+};
+
+// Quando cada palestrante foi gravado separado, o resumo do painel junta as falas de todos.
+// Devolve null se o painel tem gravação geral pronta (o resumo dela é o que vale).
+async function resumoDasGravacoesIndividuais(painelSlug: string, atual: Resultado): Promise<{ pontos: string[]; resumo: string } | null> {
+  const db = supabaseAdmin();
+  const [{ data: envios }, { data: painel }, { data: palestrantes }] = await Promise.all([
+    db
+      .from("envios")
+      .select("palestrante_id, etapa, transcricao, criado_em")
+      .eq("painel_slug", painelSlug)
+      .in("etapa", ["escrevendo", "pronto"])
+      .order("criado_em", { ascending: false }),
+    db.from("paineis").select("titulo, numero, area").eq("slug", painelSlug).single(),
+    db.from("palestrantes").select("id, nome, cargo, ordem").eq("painel_slug", painelSlug).order("ordem"),
+  ]);
+  if ((envios ?? []).some((e) => !e.palestrante_id && e.etapa === "pronto")) return null;
+
+  // A gravação mais recente de cada palestrante, na ordem da mesa.
+  const porPessoa = new Map<string, { falas: { texto: string }[] }>();
+  for (const e of envios ?? []) {
+    if (e.palestrante_id && e.transcricao && !porPessoa.has(e.palestrante_id)) porPessoa.set(e.palestrante_id, e.transcricao);
+  }
+  if (porPessoa.size <= 1) return atual;
+
+  const blocos = (palestrantes ?? [])
+    .filter((p) => porPessoa.has(p.id))
+    .map((p) => `## ${p.nome} (${p.cargo})\n${(porPessoa.get(p.id)?.falas ?? []).map((f) => f.texto).join(" ")}`)
+    .join("\n\n");
+
+  const anthropic = new Anthropic();
+  const resposta = await anthropic.beta.messages
+    .stream({
+      model: "claude-opus-5-5",
+      max_tokens: 16000,
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      output_config: { effort: "high", format: { type: "json_schema", schema: esquemaResumo } },
+      system: `${SISTEMA}\n\nNeste painel cada palestrante foi gravado separadamente. Escreva o resumo e os pontos do painel como um todo, a partir das falas de todos.`,
+      messages: [
+        {
+          role: "user",
+          content: `Painel: ${painel?.numero ? `Painel ${painel.numero} · ` : ""}${painel?.titulo} (${painel?.area})
+
+<falas_por_palestrante>
+${blocos}
+</falas_por_palestrante>`,
+        },
+      ],
+    })
+    .finalMessage();
+  if (resposta.stop_reason === "refusal" || resposta.stop_reason === "max_tokens") return atual;
+  const texto = resposta.content.map((b) => (b.type === "text" ? b.text : "")).join("");
+  return z.object({ pontos: z.array(z.string()), resumo: z.string() }).parse(JSON.parse(texto));
 }
