@@ -37,7 +37,8 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 - Identidade visual: cartaz oficial (névoa sobre o mar, marinho, azul-claro, vinho,
   Montserrat). Logos oficiais em `public/marca/` (OAB/SC azul e branco, Mzen colorido e branco); assinatura
   oficial `assinatura-azul/branco.png` (OAB | ESA | CAASC) + as duas comissões em texto. Mzen (`SeloMzen`, logo
-  colorido): rodapé, fim do kit, login, topo da área de controle e mural. Ícone do app: OAB branco sobre o mar. Cards: logo OAB
+  colorido): rodapé, fim do kit, topo da área de controle e mural. Login = produto "Mzen hub" (barra com logo
+  Mzen + "hub", título "Entrar no Mzen hub"), assinatura OAB pequena dentro do quadro. Ícone do app: OAB branco sobre o mar. Cards: logo OAB
   embutido em `src/lib/logo-oab.ts` (next/og não busca arquivo do próprio site).
 
 ## Equipe (tabela `equipe`)
