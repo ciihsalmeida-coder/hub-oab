@@ -104,7 +104,7 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
                     <p className="leading-tight font-bold">{c.titulo}</p>
                     {c.palestranteId && <p className="text-sm text-muted">{nomePor.get(c.palestranteId)?.nome}</p>}
                     <div className="mt-3">
-                      <Compartilhar titulo={c.titulo} alvo={painel.slug} />
+                      <Compartilhar titulo={c.titulo} alvo={painel.slug} video={c.videoUrl} />
                     </div>
                   </figcaption>
                 </figure>

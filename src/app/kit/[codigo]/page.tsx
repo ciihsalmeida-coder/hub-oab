@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Copiar } from "@/components/Botoes";
+import { Compartilhar, Copiar } from "@/components/Botoes";
 import { Assinatura, FaixaLocal, MzenTopo, SeloMzen } from "@/components/Marca";
 import { LinkContado, Rastrear, VideoContado } from "@/components/Rastrear";
 import { buscarKit } from "@/lib/kit";
@@ -167,6 +167,9 @@ export default async function Kit({
                     >
                       ⬇ Baixar vídeo
                     </LinkContado>
+                    <div className="mt-2 text-center">
+                      <Compartilhar titulo={c.titulo} alvo={p.slug} video={c.video_url} />
+                    </div>
                   </figcaption>
                 </figure>
               ))}
