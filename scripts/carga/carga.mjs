@@ -1,29 +1,36 @@
-// Teste de carga: simula muita gente abrindo o hub ao mesmo tempo e guarda o resultado no Supabase.
+// Teste de carga: simula muita gente abrindo o hub e guarda o resultado no Supabase.
 // Roda no GitHub Actions (.github/workflows/carga.yml). Não executa o JavaScript das páginas,
 // então não suja as métricas do evento.
+// Atenção: tudo sai de UMA máquina. Acima de alguns milhares de pedidos por segundo a Vercel
+// entende como ataque e bloqueia essa máquina (é a proteção funcionando, não o site caindo).
+// Por isso o teste usa um ritmo fixo, realista para o congresso, com folga.
 import autocannon from "autocannon";
 
 const SITE = process.env.SITE ?? "https://hub-oab.vercel.app";
 const SEGUNDOS = Number(process.env.SEGUNDOS ?? 60);
-const rotas = [
-  { rota: "/", conexoes: 200 },
-  { rota: "/paineis/abertura", conexoes: 200 },
-  { rota: "/paineis/painel-3", conexoes: 100 },
-  { rota: "/api/mural", conexoes: 20 },
+const etapas = [
+  // ~1.800 pessoas abrindo o QR code no mesmo minuto
+  { rota: "/", conexoes: 50, porSegundo: 30 },
+  { rota: "/paineis/abertura", conexoes: 50, porSegundo: 30 },
+  // pico 3x maior, para medir a folga
+  { rota: "/", conexoes: 100, porSegundo: 100 },
+  { rota: "/paineis/painel-3", conexoes: 100, porSegundo: 100 },
+  // 10 telões atualizando o mural (cada um a cada 60 s) com folga de 30x
+  { rota: "/api/mural", conexoes: 5, porSegundo: 5 },
 ];
 
-for (const { rota, conexoes } of rotas) {
-  const r = await autocannon({ url: SITE + rota, connections: conexoes, duration: SEGUNDOS });
+for (const { rota, conexoes, porSegundo } of etapas) {
+  const r = await autocannon({ url: SITE + rota, connections: conexoes, overallRate: porSegundo, duration: SEGUNDOS });
+  const codigos = Object.fromEntries(Object.entries(r.statusCodeStats ?? {}).map(([c, v]) => [c, v.count]));
   const resultado = {
     conexoes,
+    ritmo_por_segundo: porSegundo,
     segundos: SEGUNDOS,
     pedidos: r.requests.total,
-    por_segundo: Math.round(r.requests.average),
     ms_mediana: r.latency.p50,
     ms_p97_5: r.latency.p97_5,
     ms_maximo: r.latency.max,
-    status_2xx: r["2xx"],
-    status_nao_2xx: r.non2xx,
+    codigos,
     erros_conexao: r.errors,
     timeouts: r.timeouts,
   };
