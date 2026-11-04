@@ -1,0 +1,25 @@
+# Teste de carga do hub: roda quando este arquivo muda ou pelo botão "Run workflow".
+name: Teste de carga
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/carga.yml", "scripts/carga/**"]
+
+jobs:
+  carga:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Instalar autocannon
+        run: npm install --no-save --prefix scripts/carga autocannon@7.15.0
+      - name: Rodar
+        env:
+          SUPABASE_URL: https://fznihnlsnshbkfkkisvg.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: node scripts/carga/carga.mjs
