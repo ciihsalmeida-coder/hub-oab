@@ -1,7 +1,10 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
-import { baixar, cliente as clienteDrive } from "@/lib/drive";
+import https from "node:https";
+import type { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import { cliente as clienteDrive } from "@/lib/drive";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 // Pipeline de um painel: áudio no Drive → AssemblyAI (transcrição com falantes) → Claude (textos) → rascunho.
@@ -20,6 +23,27 @@ async function assembly(caminho: string, init?: RequestInit) {
   });
   if (!r.ok) throw new Error(`AssemblyAI ${r.status}: ${await r.text()}`);
   return r.json();
+}
+
+// Envia um arquivo para a AssemblyAI aos pedaços, sem carregar tudo na memória.
+// (O fetch do Node guarda o corpo inteiro antes de mandar; com vídeo de 600 MB isso derruba o site.)
+async function enviarParaAssembly(origem: Readable): Promise<{ upload_url: string }> {
+  const req = https.request(`${ASSEMBLY}/upload`, {
+    method: "POST",
+    headers: { authorization: process.env.ASSEMBLYAI_API_KEY!, "content-type": "application/octet-stream" },
+  });
+  const resposta = new Promise<{ upload_url: string }>((ok, falha) => {
+    req.on("response", (res) => {
+      let texto = "";
+      res.on("data", (c) => (texto += c));
+      res.on("end", () =>
+        res.statusCode && res.statusCode < 300 ? ok(JSON.parse(texto)) : falha(new Error(`AssemblyAI ${res.statusCode}: ${texto}`)),
+      );
+    });
+    req.on("error", falha);
+  });
+  await pipeline(origem, req);
+  return resposta;
 }
 
 type Envio = {
@@ -116,8 +140,9 @@ export async function processarProximo(): Promise<{ envio?: string; etapa?: stri
       const meta = await api.files.get({ fileId: envio.origem_drive_id!, fields: "size" });
       const mb = Number(meta.data.size ?? 0) / 1024 / 1024;
       if (mb > LIMITE_ENVIO_MB) throw new Error(`Arquivo com ${mb.toFixed(0)} MB. Envie só o áudio (MP3 ou WAV) do painel.`);
-      const conteudo = await baixar(api, envio.origem_drive_id!);
-      const upload = await assembly("/upload", { method: "POST", body: new Uint8Array(conteudo) });
+      // Passa o arquivo do Drive direto para a AssemblyAI, aos pedaços: um vídeo de 600 MB não cabe na memória.
+      const arquivo = await api.files.get({ fileId: envio.origem_drive_id!, alt: "media" }, { responseType: "stream" });
+      const upload = await enviarParaAssembly(arquivo.data as Readable);
       const transcricao = await assembly("/transcript", {
         method: "POST",
         headers: { "content-type": "application/json" },

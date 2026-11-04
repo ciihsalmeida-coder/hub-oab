@@ -22,7 +22,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
     db.from("fotos").select("id, url, miniatura_url, palestrante_id, status").eq("painel_slug", slug).order("ordem"),
     db
       .from("envios")
-      .select("nome, etapa, erro, atualizado_em")
+      .select("tipo, nome, etapa, erro, atualizado_em")
       .eq("painel_slug", slug)
       .neq("etapa", "ignorado")
       .order("criado_em", { ascending: false })
@@ -105,7 +105,7 @@ const etapas: Record<string, [string, string]> = {
   erro: ["⚠️", "Algo deu errado no processamento."],
 };
 
-function StatusIA({ envio, slug }: { envio?: { nome: string | null; etapa: string; erro: string | null }; slug: string }) {
+function StatusIA({ envio, slug }: { envio?: { tipo: string; nome: string | null; etapa: string; erro: string | null }; slug: string }) {
   if (!envio) {
     return (
       <Cartao className="border-dashed">
@@ -117,7 +117,10 @@ function StatusIA({ envio, slug }: { envio?: { nome: string | null; etapa: strin
       </Cartao>
     );
   }
-  const [icone, texto] = etapas[envio.etapa] ?? ["ℹ️", envio.etapa];
+  const [icone, texto] =
+    envio.tipo === "video" && envio.etapa === "recebido"
+      ? ["🎞️", "Vídeo recebido. Se o áudio da mesa não chegar em 15 minutos, a transcrição usa o som do próprio vídeo."]
+      : (etapas[envio.etapa] ?? ["ℹ️", envio.etapa]);
   const cor = envio.etapa === "erro" ? "border-red-300/30 bg-red-400/10" : envio.etapa === "pronto" ? "border-emerald-300/30 bg-emerald-400/10" : "border-sky/40 bg-sky/5";
   return (
     <section className={`rounded-3xl border p-5 ${cor}`}>
