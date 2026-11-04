@@ -36,7 +36,8 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
   evento. Vercel Pro no mês do evento (Hobby não permite uso comercial).
 - Identidade visual: cartaz oficial (névoa sobre o mar, marinho, azul-claro, vinho,
   Montserrat). Logos oficiais em `public/marca/` (OAB/SC azul e branco, Mzen colorido e branco); assinatura
-  como no cartaz (OAB | Comissões | ESA | CAASC). Mzen discreta: rodapé e canto do mural. Cards: logo OAB
+  oficial `assinatura-azul/branco.png` (OAB | ESA | CAASC) + as duas comissões em texto. Mzen (`SeloMzen`, logo
+  colorido): rodapé, fim do kit, login, topo da área de controle e mural. Ícone do app: OAB branco sobre o mar. Cards: logo OAB
   embutido em `src/lib/logo-oab.ts` (next/og não busca arquivo do próprio site).
 
 ## Equipe (tabela `equipe`)

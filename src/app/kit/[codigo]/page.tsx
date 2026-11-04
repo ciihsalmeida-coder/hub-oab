@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Copiar } from "@/components/Botoes";
-import { Assinatura, FaixaLocal } from "@/components/Marca";
+import { Assinatura, FaixaLocal, SeloMzen } from "@/components/Marca";
 import { LinkContado, Rastrear, VideoContado } from "@/components/Rastrear";
 import { buscarKit } from "@/lib/kit";
 
@@ -205,9 +205,11 @@ export default async function Kit({
         <p className="rounded-2xl bg-card p-4 text-center text-sm text-muted">
           Ao postar, marque <strong className="text-navy">@oabsc</strong> e use{" "}
           <strong className="text-navy">#XIVCongressoOAB</strong>.
-          <br />
-          Fotos e vídeos: Mzen Films.
         </p>
+        <div className="flex flex-col items-center gap-2 rounded-2xl bg-navy p-5 text-center">
+          <SeloMzen texto="Kit produzido por" />
+          <p className="text-xs text-white/60">Cobertura, cortes e tecnologia do XIV Congresso</p>
+        </div>
       </div>
     </main>
   );

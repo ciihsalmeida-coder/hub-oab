@@ -1,42 +1,59 @@
 import Link from "next/link";
 
-// Assinatura institucional, como no cartaz: OAB/SC | Comissões | ESA | CAASC.
-// No celular vira duas linhas (OAB · ESA · CAASC em cima, Comissões embaixo); no computador, uma.
+// Assinatura oficial (OAB/SC | ESA | CAASC) + as duas comissões organizadoras.
+// No celular as comissões descem para a linha de baixo; no computador ficam ao lado.
 export function Assinatura({ claro = false }: { claro?: boolean }) {
   const cor = claro ? "text-white" : "text-navy";
-  const barra = `h-7 w-px ${claro ? "bg-white/50" : "bg-navy/40"}`;
   return (
-    <div className={`flex flex-wrap items-center gap-x-3 gap-y-3 ${cor}`}>
+    <div className={`flex flex-wrap items-center gap-x-4 gap-y-2 ${cor}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={claro ? "/marca/oab-branco.png" : "/marca/oab-azul.png"}
-        alt="OAB Santa Catarina"
-        width={72}
-        height={38}
-        className="h-[38px] w-auto"
+        src={
+          claro ? "/marca/assinatura-branco.png" : "/marca/assinatura-azul.png"
+        }
+        alt="OAB Santa Catarina, ESA e CAASC"
+        width={177}
+        height={36}
+        className="h-9 w-auto"
       />
-      <span className={`${barra} hidden sm:block`} />
-      <span className="order-3 flex basis-full items-center gap-2 sm:order-none sm:basis-auto">
-        <span className="text-base font-extrabold tracking-tight">Comissões</span>
-        <span className="text-[9px] leading-tight font-medium">
+      <span
+        className={`hidden h-8 w-px sm:block ${claro ? "bg-white/50" : "bg-navy/40"}`}
+      />
+      <span className="flex basis-full items-center gap-2 text-[10px] leading-tight font-medium sm:basis-auto">
+        <span>
           Comissão de Direito
           <br />
           Portuário e Marítimo
         </span>
-        <span className={`h-5 w-px ${claro ? "bg-white/40" : "bg-navy/30"}`} />
-        <span className="text-[9px] leading-tight font-medium">
+        <span className={`h-6 w-px ${claro ? "bg-white/40" : "bg-navy/30"}`} />
+        <span>
           Comissão de
           <br />
           Direito Aduaneiro
         </span>
       </span>
-      <span className="flex items-center gap-3">
-        <span className={barra} />
-        <span className="text-base font-extrabold">ESA</span>
-        <span className={barra} />
-        <span className="text-base font-extrabold">CAASC</span>
-      </span>
     </div>
+  );
+}
+
+// Assinatura da Mzen com o logo colorido (para fundos escuros).
+export function SeloMzen({
+  texto = "Cobertura audiovisual e tecnologia",
+}: {
+  texto?: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-2.5 text-xs font-semibold tracking-wide text-white/75">
+      {texto}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/marca/mzen.png"
+        alt="Mzen"
+        width={82}
+        height={24}
+        className="h-6 w-auto"
+      />
+    </span>
   );
 }
 
@@ -98,16 +115,8 @@ export function Rodape() {
       <p className="mt-1">
         OAB Santa Catarina · Costão do Santinho, Florianópolis
       </p>
-      <p className="mt-6 flex items-center justify-center gap-2 text-[11px] tracking-wide text-white/50">
-        Cobertura e tecnologia
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/marca/mzen-branco.png"
-          alt="Mzen"
-          width={56}
-          height={16}
-          className="h-4 w-auto opacity-70"
-        />
+      <p className="mt-6">
+        <SeloMzen />
       </p>
     </footer>
   );

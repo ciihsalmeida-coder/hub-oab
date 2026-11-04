@@ -124,7 +124,7 @@ export function Mural({ qr, site }: { qr: string; site: string }) {
           <p className="mt-[1vw] text-[1.2vw] font-extrabold">Resumos, vídeos e suas fotos</p>
           <p className="text-[1vw] text-white/70">{site}</p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/marca/mzen-branco.png" alt="Mzen" className="mx-auto mt-[1.6vw] h-[1vw] w-auto opacity-40" />
+          <img src="/marca/mzen.png" alt="Mzen" className="mx-auto mt-[1.6vw] h-[1.4vw] w-auto opacity-80" />
         </div>
       </aside>
     </main>
