@@ -346,6 +346,31 @@ ${transcricao}
     return envio.palestrante_id ? q.in("envio_id", ids) : q.or(`envio_id.is.null,envio_id.in.(${ids.join(",")})`);
   };
 
+  // Geral + individuais juntas: o resumo vem da geral; frases, cortes e legenda de quem tem gravação
+  // própria vêm só da gravação dele (sem repetir o que a geral também pegou).
+  const { data: individuais } = await db
+    .from("envios")
+    .select("palestrante_id")
+    .eq("painel_slug", envio.painel_slug)
+    .not("palestrante_id", "is", null)
+    .in("etapa", ["escrevendo", "pronto"]);
+  const temGravacaoPropria = new Set((individuais ?? []).map((e) => e.palestrante_id as string));
+  if (!individual) {
+    const daGeral = (pid: string | null) => !pid || !temGravacaoPropria.has(pid);
+    resultado.falas = resultado.falas.filter((f) => daGeral(id(f.palestrante)));
+    resultado.cortes = resultado.cortes.filter((c) => daGeral(id(c.palestrante)));
+    resultado.legendas_palestrantes = resultado.legendas_palestrantes.filter((l) => daGeral(id(l.palestrante)));
+  } else {
+    // A gravação individual substitui o que a geral tinha atribuído a esta pessoa.
+    const { data: gerais } = await db.from("envios").select("id").eq("painel_slug", envio.painel_slug).is("palestrante_id", null);
+    const idsGerais = (gerais ?? []).map((e) => e.id);
+    for (const tabela of ["falas", "cortes"] as const) {
+      let q = db.from(tabela).delete().eq("painel_slug", envio.painel_slug).eq("palestrante_id", individual.id);
+      q = idsGerais.length ? q.or(`envio_id.is.null,envio_id.in.(${idsGerais.join(",")})`) : q.is("envio_id", null);
+      await (tabela === "cortes" ? q.eq("origem", "auto") : q);
+    }
+  }
+
   // Resumo do painel: da gravação geral, quando houver; senão, a soma das gravações individuais.
   const resumoPainel = individual ? await resumoDasGravacoesIndividuais(envio.painel_slug, resultado) : resultado;
   if (resumoPainel) {

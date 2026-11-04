@@ -95,7 +95,8 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
    tipo `midia_palestrante`). envios.palestrante_id; falas/cortes.envio_id. Cada fonte (geral ou palestrante) é
    transcrita e refeita sem apagar as outras; falas/cortes vão direto para a pessoa. Resumo do painel = gravação geral
    se houver; senão, resumo combinado das individuais (`resumoDasGravacoesIndividuais`). cortar.py agrupa por envio
-   (`escolher_fontes`): vídeo da mesma pessoa. Vídeo grande vai do Drive à AssemblyAI em stream (https.request;
+   (`escolher_fontes`): vídeo da mesma pessoa. Geral + individual juntas: resumo da geral; frases/cortes/legenda de
+   quem tem gravação própria vêm só dela (a geral descarta os dessa pessoa; a individual apaga os que a geral tinha). Vídeo grande vai do Drive à AssemblyAI em stream (https.request;
    fetch do Node bufferiza tudo). Painel `ensaio` (fora do público) para testes; apagar antes do evento.
 10. Teste de carga (`.github/workflows/carga.yml`, manual; resultados em `testes_carga`): de uma máquina só a
    Vercel bloqueia com 403 após ~100 pedidos (proteção contra robô). Não mede capacidade real; páginas são ISR/CDN.
