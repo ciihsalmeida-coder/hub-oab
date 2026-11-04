@@ -29,7 +29,7 @@ function montar(d: Dados): Slide[] {
   return lista.length ? lista : cortes;
 }
 
-export function Mural({ qr, site }: { qr: string; site: string }) {
+export function Mural({ qr }: { qr: string }) {
   const [dados, setDados] = useState<Dados | null>(null);
   const [i, setI] = useState(0);
   const slides = useMemo(() => (dados ? montar(dados) : []), [dados]);
@@ -122,7 +122,6 @@ export function Mural({ qr, site }: { qr: string; site: string }) {
         <div className="text-center">
           <div className="mx-auto w-[15vw] rounded-[1.5vw] bg-white p-[0.8vw]" dangerouslySetInnerHTML={{ __html: qr }} />
           <p className="mt-[1vw] text-[1.2vw] font-extrabold">Resumos, vídeos e suas fotos</p>
-          <p className="text-[1vw] text-white/70">{site}</p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/marca/mzen.png" alt="Mzen" className="mx-auto mt-[1.6vw] h-[1.4vw] w-auto opacity-80" />
         </div>

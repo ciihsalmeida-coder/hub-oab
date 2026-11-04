@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Copiar } from "@/components/Botoes";
-import { Assinatura, FaixaLocal, SeloMzen } from "@/components/Marca";
+import { Assinatura, FaixaLocal, MzenTopo, SeloMzen } from "@/components/Marca";
 import { LinkContado, Rastrear, VideoContado } from "@/components/Rastrear";
 import { buscarKit } from "@/lib/kit";
 
@@ -23,7 +23,8 @@ export default async function Kit({
     <main>
       <Rastrear tipo="visita_kit" alvo={p.slug} />
       <header className="ceu-mar px-4 pt-6 pb-8">
-        <div className="mx-auto max-w-3xl">
+        <div className="relative mx-auto max-w-3xl">
+          <MzenTopo />
           <Assinatura />
           <p className="mt-8 text-xs font-extrabold tracking-[0.2em] text-wine uppercase">
             Kit do palestrante

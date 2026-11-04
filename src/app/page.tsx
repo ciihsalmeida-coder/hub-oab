@@ -3,7 +3,7 @@ import { AgoraNoPalco } from "@/components/AgoraNoPalco";
 import { Rastrear } from "@/components/Rastrear";
 import { GaleriaBotao } from "@/components/GaleriaBotao";
 import { ListaPaineis } from "@/components/ListaPaineis";
-import { Assinatura, FaixaLocal, TituloCongresso } from "@/components/Marca";
+import { Assinatura, FaixaLocal, MzenTopo, TituloCongresso } from "@/components/Marca";
 import { dias } from "@/data/programacao";
 import { listarPaineis } from "@/lib/dados";
 
@@ -14,7 +14,8 @@ export default async function Home() {
   return (
     <main>
       <header className="ceu-mar px-4 pt-8 pb-10">
-        <div className="mx-auto max-w-3xl">
+        <div className="relative mx-auto max-w-3xl">
+          <MzenTopo />
           <Assinatura />
           <div className="mt-8">
             <TituloCongresso />

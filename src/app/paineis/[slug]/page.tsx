@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Compartilhar } from "@/components/Botoes";
 import { Cadastro } from "@/components/Cadastro";
 import { GaleriaBotao } from "@/components/GaleriaBotao";
-import { Assinatura, FaixaLocal, Voltar } from "@/components/Marca";
+import { Assinatura, FaixaLocal, MzenTopo, Voltar } from "@/components/Marca";
 import { Palestrante } from "@/components/Palestrante";
 import { LinkContado, Rastrear, VideoContado } from "@/components/Rastrear";
 import { VideoSessao } from "@/components/VideoSessao";
@@ -34,7 +34,8 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
     <main>
       <Rastrear tipo="visita_painel" alvo={painel.slug} />
       <header className="ceu-mar px-4 pt-6 pb-8">
-        <div className="mx-auto max-w-3xl">
+        <div className="relative mx-auto max-w-3xl">
+          <MzenTopo />
           <Voltar />
           <div className="mt-5">
             <Assinatura />

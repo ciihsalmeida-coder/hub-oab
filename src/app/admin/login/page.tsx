@@ -29,7 +29,7 @@ export default function Login() {
   return (
     <main className="flex min-h-screen items-start justify-center px-4 pt-16">
       <div className="w-full max-w-sm">
-        <Assinatura claro />
+        <Assinatura claro empilhada />
         <form
           action={entrar}
           className="mt-8 rounded-[28px] border border-white/15 bg-white/[0.08] p-6 shadow-2xl backdrop-blur-xl"

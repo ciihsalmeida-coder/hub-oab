@@ -2,7 +2,8 @@ import Link from "next/link";
 
 // Assinatura oficial (OAB/SC | ESA | CAASC) + as duas comissões organizadoras.
 // No celular as comissões descem para a linha de baixo; no computador ficam ao lado.
-export function Assinatura({ claro = false }: { claro?: boolean }) {
+// `empilhada`: comissões sempre embaixo (para colunas estreitas, como a tela de login).
+export function Assinatura({ claro = false, empilhada = false }: { claro?: boolean; empilhada?: boolean }) {
   const cor = claro ? "text-white" : "text-navy";
   return (
     <div className={`flex flex-wrap items-center gap-x-4 gap-y-2 ${cor}`}>
@@ -16,10 +17,10 @@ export function Assinatura({ claro = false }: { claro?: boolean }) {
         height={36}
         className="h-9 w-auto"
       />
+      {!empilhada && <span className={`hidden h-8 w-px sm:block ${claro ? "bg-white/50" : "bg-navy/40"}`} />}
       <span
-        className={`hidden h-8 w-px sm:block ${claro ? "bg-white/50" : "bg-navy/40"}`}
-      />
-      <span className="flex basis-full items-center gap-2 text-[10px] leading-tight font-medium sm:basis-auto">
+        className={`flex basis-full items-center gap-2 text-[10px] leading-tight font-medium ${empilhada ? "" : "sm:basis-auto"}`}
+      >
         <span>
           Comissão de Direito
           <br />
@@ -33,6 +34,17 @@ export function Assinatura({ claro = false }: { claro?: boolean }) {
         </span>
       </span>
     </div>
+  );
+}
+
+// Mzen discreta no canto do topo das páginas públicas (o topo tem fundo claro de névoa).
+export function MzenTopo() {
+  return (
+    <span className="absolute top-0 right-0 flex items-center gap-1.5 text-[9px] font-semibold tracking-[0.15em] text-navy/50 uppercase">
+      <span className="hidden sm:inline">Cobertura</span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/marca/mzen.png" alt="Mzen" width={62} height={18} className="h-[18px] w-auto opacity-90" />
+    </span>
   );
 }
 
