@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Compartilhar, Copiar } from "@/components/Botoes";
+import { GaleriaFotos } from "@/components/GaleriaFotos";
 import { Assinatura, FaixaLocal, MzenTopo, SeloMzen } from "@/components/Marca";
 import { LinkContado, Rastrear, VideoContado } from "@/components/Rastrear";
 import { buscarKit } from "@/lib/kit";
@@ -180,29 +181,13 @@ export default async function Kit({
         {kit.fotos.length > 0 && (
           <Secao
             titulo="Suas fotos"
-            subtitulo="Toque numa foto para abrir em alta resolução e salvar."
+            subtitulo="Toque numa foto para ver em tela cheia, passar para as próximas e baixar."
           >
-            <div className="grid grid-cols-3 gap-2">
-              {kit.fotos.map((f) => (
-                <LinkContado
-                  key={f.id}
-                  tipo="baixou_foto"
-                  alvo={p.slug}
-                  href={f.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  download
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={f.miniatura_url ?? f.url}
-                    alt=""
-                    loading="lazy"
-                    className="aspect-[4/5] w-full rounded-xl object-cover"
-                  />
-                </LinkContado>
-              ))}
-            </div>
+            <GaleriaFotos
+              fotos={kit.fotos.map((f) => ({ id: f.id, url: f.url, miniatura: f.miniatura_url }))}
+              alvo={p.slug}
+              nomeArquivo={`congresso-oab-${p.slug}`}
+            />
           </Secao>
         )}
 

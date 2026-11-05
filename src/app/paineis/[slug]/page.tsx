@@ -2,9 +2,10 @@ import { notFound } from "next/navigation";
 import { Compartilhar } from "@/components/Botoes";
 import { Cadastro } from "@/components/Cadastro";
 import { GaleriaBotao } from "@/components/GaleriaBotao";
+import { GaleriaFotos } from "@/components/GaleriaFotos";
 import { Assinatura, FaixaLocal, MzenTopo, Voltar } from "@/components/Marca";
 import { Palestrante } from "@/components/Palestrante";
-import { LinkContado, Rastrear, VideoContado } from "@/components/Rastrear";
+import { Rastrear, VideoContado } from "@/components/Rastrear";
 import { VideoSessao } from "@/components/VideoSessao";
 import { congresso, dias, paineis } from "@/data/programacao";
 import { buscarConteudo } from "@/lib/dados";
@@ -135,14 +136,7 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
 
         <Secao titulo="Fotos do painel">
           {painel.fotos.length ? (
-            <div className="grid grid-cols-3 gap-2">
-              {painel.fotos.map((f) => (
-                <LinkContado key={f.id} tipo="baixou_foto" alvo={painel.slug} href={f.url} target="_blank" rel="noreferrer" download>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={f.miniatura ?? f.url} alt="" loading="lazy" className="aspect-[4/5] w-full rounded-xl object-cover" />
-                </LinkContado>
-              ))}
-            </div>
+            <GaleriaFotos fotos={painel.fotos} alvo={painel.slug} nomeArquivo={`congresso-oab-${painel.slug}`} />
           ) : (
             <EmBreve>A seleção de fotos aparece aqui até 2 horas depois do painel.</EmBreve>
           )}
