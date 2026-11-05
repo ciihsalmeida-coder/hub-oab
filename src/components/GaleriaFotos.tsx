@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Salvar } from "@/components/Botoes";
+import type { TipoEvento } from "@/lib/metricas";
 
 export type FotoGaleria = { id: string; url: string; miniatura: string | null };
 
@@ -52,18 +53,23 @@ export function GaleriaFotos({
   );
 }
 
-function Visualizador({
+// Também usado pelos cards do kit (evento "baixou_card"; cada item pode ter o próprio nome de arquivo).
+export function Visualizador({
   fotos,
   inicial,
   alvo,
   nomeArquivo,
   fechar,
+  evento = "baixou_foto",
+  nomes,
 }: {
   fotos: FotoGaleria[];
   inicial: number;
   alvo?: string;
   nomeArquivo: string;
   fechar: () => void;
+  evento?: TipoEvento;
+  nomes?: string[];
 }) {
   const [i, setI] = useState(inicial);
   const toque = useRef<number | null>(null);
@@ -164,9 +170,9 @@ function Visualizador({
           <Salvar
             key={foto.id}
             url={foto.url}
-            titulo={`${nomeArquivo}-${i + 1}`}
+            titulo={nomes?.[i] ?? `${nomeArquivo}-${i + 1}`}
             tipo="imagem"
-            evento="baixou_foto"
+            evento={evento}
             alvo={alvo}
           />
         </div>

@@ -177,7 +177,7 @@ export function Salvar({
         : "Preparando…"
       : estado === "pronto"
         ? "⬇ Toque para salvar"
-        : "⬇ Salvar no celular";
+        : null;
   return (
     <>
       <button
@@ -188,7 +188,13 @@ export function Salvar({
         disabled={estado === "baixando" || !url}
         className={`block w-full rounded-full bg-sky py-2.5 text-center text-sm font-extrabold text-navy uppercase disabled:opacity-60 ${className}`}
       >
-        {rotulo}
+        {rotulo ?? (
+          <>
+            {/* Celular (tela de toque) salva na galeria; computador baixa o arquivo */}
+            <span className="hidden pointer-coarse:inline">⬇ Salvar no celular</span>
+            <span className="pointer-coarse:hidden">⬇ Baixar</span>
+          </>
+        )}
       </button>
       {previa && (
         <JanelaSalvar src={previa} tipo={tipo} fechar={fecharPrevia} />

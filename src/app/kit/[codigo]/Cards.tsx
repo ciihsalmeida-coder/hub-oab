@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Salvar } from "@/components/Botoes";
+import { Visualizador } from "@/components/GaleriaFotos";
 
 export type CardKit = {
   chave: string;
@@ -11,22 +12,21 @@ export type CardKit = {
 };
 
 const FORMATOS = [
-  { id: "feed", rotulo: "Feed · 4:5", classe: "aspect-[4/5] w-64" },
-  { id: "story", rotulo: "Story · 9:16", classe: "aspect-[9/16] w-52" },
+  { id: "feed", rotulo: "Feed · 4:5", proporcao: "aspect-[4/5]", largura: "w-64" },
+  { id: "story", rotulo: "Story · 9:16", proporcao: "aspect-[9/16]", largura: "w-52" },
 ] as const;
 
 // Cards do kit com a escolha Feed (Instagram/LinkedIn) ou Story (Stories e Reels).
+// Tocar ou clicar no card abre em tamanho grande, com setas para os outros cards e o botão de salvar.
 export function CardsKit({ cards, alvo }: { cards: CardKit[]; alvo: string }) {
-  const [formato, setFormato] =
-    useState<(typeof FORMATOS)[number]["id"]>("feed");
+  const [formato, setFormato] = useState<(typeof FORMATOS)[number]["id"]>("feed");
+  const [aberto, setAberto] = useState<number | null>(null);
   const atual = FORMATOS.find((f) => f.id === formato)!;
+  const srcDe = (c: CardKit) => (formato === "story" ? `${c.src}&formato=story` : c.src);
+
   return (
     <>
-      <div
-        className="mb-4 inline-flex rounded-full border border-line bg-card p-1"
-        role="group"
-        aria-label="Formato do card"
-      >
+      <div className="mb-4 inline-flex rounded-full border border-line bg-card p-1" role="group" aria-label="Formato do card">
         {FORMATOS.map((f) => (
           <button
             key={f.id}
@@ -39,24 +39,20 @@ export function CardsKit({ cards, alvo }: { cards: CardKit[]; alvo: string }) {
         ))}
       </div>
       <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2">
-        {cards.map((c) => {
-          const src = formato === "story" ? `${c.src}&formato=story` : c.src;
+        {cards.map((c, i) => {
+          const src = srcDe(c);
           return (
-            <figure
-              key={`${c.chave}-${formato}`}
-              className={`shrink-0 snap-start ${atual.classe.split(" ")[1]}`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={src}
-                alt={c.alt}
-                loading="lazy"
-                className={`${atual.classe.split(" ")[0]} w-full rounded-2xl bg-fog shadow-md`}
-              />
+            <figure key={`${c.chave}-${formato}`} className={`shrink-0 snap-start ${atual.largura}`}>
+              <button
+                onClick={() => setAberto(i)}
+                className="block w-full cursor-zoom-in"
+                aria-label={`Ver em tamanho grande: ${c.alt}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt={c.alt} loading="lazy" className={`${atual.proporcao} w-full rounded-2xl bg-fog shadow-md`} />
+              </button>
               {c.chave === "fundo" && (
-                <figcaption className="mt-2 text-xs text-muted">
-                  Moldura livre: escreva sua mensagem no Instagram ou no Canva.
-                </figcaption>
+                <figcaption className="mt-2 text-xs text-muted">Moldura livre: escreva sua mensagem no Instagram ou no Canva.</figcaption>
               )}
               <Salvar
                 url={src}
@@ -70,6 +66,17 @@ export function CardsKit({ cards, alvo }: { cards: CardKit[]; alvo: string }) {
           );
         })}
       </div>
+      {aberto !== null && (
+        <Visualizador
+          fotos={cards.map((c) => ({ id: `${c.chave}-${formato}`, url: srcDe(c), miniatura: null }))}
+          nomes={cards.map((c) => `card-congresso-oab-${c.rotulo}-${formato}`)}
+          inicial={aberto}
+          alvo={alvo}
+          nomeArquivo="card-congresso-oab"
+          evento="baixou_card"
+          fechar={() => setAberto(null)}
+        />
+      )}
     </>
   );
 }
