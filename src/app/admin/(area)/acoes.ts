@@ -129,14 +129,22 @@ export async function sair() {
 export async function refazerComIA(slug: string, envioId?: string) {
   const { db, membro } = await exigirEquipe();
   if (!membro) throw new Error("Sem permissão.");
-  const busca = db.from("envios").select("id, assemblyai_id").eq("painel_slug", slug);
+  const busca = db.from("envios").select("id, transcricao").eq("painel_slug", slug);
   const { data: envio } = await (envioId
     ? busca.eq("id", envioId).maybeSingle()
     : busca.neq("etapa", "ignorado").order("criado_em", { ascending: false }).limit(1).maybeSingle());
   if (!envio) throw new Error("Nenhuma gravação deste painel no Drive ainda.");
+  // Com a transcrição já guardada, só a IA escreve de novo (a cópia na AssemblyAI é apagada depois de salva).
+  // Sem ela, recomeça do arquivo do Drive.
   const r = await db
     .from("envios")
-    .update({ etapa: envio.assemblyai_id ? "transcrevendo" : "recebido", erro: null, bloqueado_ate: null, tentativas: 0 })
+    .update({
+      etapa: envio.transcricao ? "escrevendo" : "recebido",
+      assemblyai_id: envio.transcricao ? undefined : null,
+      erro: null,
+      bloqueado_ate: null,
+      tentativas: 0,
+    })
     .eq("id", envio.id);
   if (r.error) throw r.error;
   atualizarSite(slug);

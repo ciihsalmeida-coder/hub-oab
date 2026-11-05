@@ -11,7 +11,10 @@ export const dynamic = "force-dynamic";
 async function executar(request: NextRequest) {
   if (!iaConfigurada()) return NextResponse.json({ erro: "IA ainda não configurada." }, { status: 503 });
   if (!(await autorizado(request))) return NextResponse.json({ erro: "Sem permissão." }, { status: 401 });
-  const resultado = await processarProximo();
+  // Até 3 gravações por vez: no fim de um painel chegam a geral e a de cada palestrante juntas.
+  const resultados = await Promise.all([processarProximo(), processarProximo(), processarProximo()]);
+  const resultado = resultados.find((r) => r.envio) ?? {};
+  const paineis = [...new Set(resultados.map((r) => r.painel).filter(Boolean))] as string[];
   let cortes: string[] = [];
   let erroCortes: string | undefined;
   try {
@@ -20,11 +23,15 @@ async function executar(request: NextRequest) {
     erroCortes = e instanceof Error ? e.message.slice(0, 300) : String(e);
     console.error("Falha ao acordar o robô de cortes", e);
   }
-  if (resultado.painel) {
-    revalidatePath(`/admin/paineis/${resultado.painel}`);
-    revalidatePath("/admin");
-  }
-  return NextResponse.json({ ...resultado, cortes, erroCortes, github: Boolean(process.env.GITHUB_TOKEN) });
+  for (const painel of paineis) revalidatePath(`/admin/paineis/${painel}`);
+  if (paineis.length) revalidatePath("/admin");
+  return NextResponse.json({
+    ...resultado,
+    processados: resultados.filter((r) => r.envio).length,
+    cortes,
+    erroCortes,
+    github: Boolean(process.env.GITHUB_TOKEN),
+  });
 }
 
 export const GET = executar;

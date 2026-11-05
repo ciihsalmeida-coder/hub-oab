@@ -2,7 +2,7 @@ import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 const REPO = "ciihsalmeida-coder/hub-oab";
-const INTERVALO_MS = 20 * 60_000; // espera entre disparos do mesmo painel
+const INTERVALO_MS = 8 * 60_000; // espera entre disparos do mesmo painel (gravações chegam em momentos diferentes)
 
 // Acorda o robô de cortes (GitHub Actions) para painéis com trechos sem vídeo ou cortes sem versão leve.
 export async function dispararCortes() {

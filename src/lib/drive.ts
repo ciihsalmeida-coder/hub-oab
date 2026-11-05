@@ -75,7 +75,7 @@ type Resultado = { copiados: number; erros: number; pendentes: number; paineis: 
 
 // Copia para o site o que é novo nas pastas. Tudo entra como rascunho.
 // Roda por partes: para antes do tempo limite e continua na próxima chamada.
-export async function sincronizar(orcamentoMs = 45_000): Promise<Resultado> {
+export async function sincronizar(orcamentoMs = 90_000): Promise<Resultado> {
   const inicio = Date.now();
   const api = cliente();
   const db = supabaseAdmin();
@@ -114,10 +114,15 @@ export async function sincronizar(orcamentoMs = 45_000): Promise<Resultado> {
   }
 
   const paineisTocados = new Set<string>();
-  for (const arquivo of novos) {
+  // 4 arquivos ao mesmo tempo: no fim de um painel o fotógrafo sobe dezenas de fotos de uma vez.
+  const fila = [...novos];
+  const trabalhador = async () => {
+    for (let arquivo = fila.shift(); arquivo; arquivo = fila.shift()) await copiar(arquivo);
+  };
+  const copiar = async (arquivo: (typeof novos)[number]) => {
     if (Date.now() - inicio > orcamentoMs) {
       resultado.pendentes++;
-      continue;
+      return;
     }
     try {
       if (arquivo.pasta.tipo === "midia" || arquivo.pasta.tipo === "midia_palestrante") await registrarEnvio(arquivo, arquivo.pasta);
@@ -137,7 +142,8 @@ export async function sincronizar(orcamentoMs = 45_000): Promise<Resultado> {
         atualizado_em: new Date().toISOString(),
       });
     }
-  }
+  };
+  await Promise.all([trabalhador(), trabalhador(), trabalhador(), trabalhador()]);
   resultado.paineis = [...paineisTocados];
   return resultado;
 }

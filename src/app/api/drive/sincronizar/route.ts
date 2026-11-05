@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { driveConfigurado, sincronizar } from "@/lib/drive";
 import { autorizado } from "@/lib/autorizacao";
 
-export const maxDuration = 60;
+export const maxDuration = 120; // roda a cada 2 min: termina antes da próxima rodada para não copiar o mesmo arquivo duas vezes
 export const dynamic = "force-dynamic";
 
 // Chamado a cada 2 minutos pelo agendador do banco (com o token) ou pelo botão da área de controle.

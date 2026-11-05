@@ -63,7 +63,11 @@ type Envio = {
 const COLUNAS_ENVIO = "id, painel_slug, tipo, origem_drive_id, etapa, assemblyai_id, nome, tentativas, criado_em, palestrante_id";
 
 const MAX_TENTATIVAS = 4;
-const ESPERA_AUDIO_MS = 15 * 60_000; // um vídeo só é transcrito se o áudio não chegar nesse tempo
+// Um vídeo só é transcrito se o áudio não chegar nesse tempo. Gravação individual costuma vir só em vídeo:
+// espera menos, para o kit da pessoa sair logo.
+const ESPERA_AUDIO_MS = 15 * 60_000;
+const ESPERA_AUDIO_INDIVIDUAL_MS = 5 * 60_000;
+const espera = (e: { palestrante_id: string | null }) => (e.palestrante_id ? ESPERA_AUDIO_INDIVIDUAL_MS : ESPERA_AUDIO_MS);
 
 // Pega um envio para trabalhar, com trava de 5 minutos para o agendador não processar o mesmo duas vezes.
 async function reservarEnvio(): Promise<Envio | null> {
@@ -71,14 +75,14 @@ async function reservarEnvio(): Promise<Envio | null> {
   const agora = new Date().toISOString();
   const { data: candidatos } = await db
     .from("envios")
-    .select("id, tipo, etapa, criado_em")
+    .select("id, tipo, etapa, criado_em, palestrante_id")
     .in("etapa", ["recebido", "transcrevendo", "escrevendo"])
     .or(`bloqueado_ate.is.null,bloqueado_ate.lt.${agora}`)
     .order("criado_em")
     .limit(20);
   // Vídeos recém-chegados esperam o áudio sem segurar a fila dos outros painéis.
   const prontos = (candidatos ?? []).filter(
-    (c) => c.tipo === "audio" || c.etapa !== "recebido" || Date.now() - new Date(c.criado_em).getTime() >= ESPERA_AUDIO_MS,
+    (c) => c.tipo === "audio" || c.etapa !== "recebido" || Date.now() - new Date(c.criado_em).getTime() >= espera(c),
   );
   for (const c of prontos.slice(0, 5)) {
     const { data } = await db
@@ -133,7 +137,7 @@ export async function processarProximo(): Promise<{ envio?: string; etapa?: stri
   await supabaseAdmin().from("envios").update({ tentativas: envio.tentativas + 1 }).eq("id", envio.id);
   try {
     if (envio.etapa === "recebido") {
-      if (envio.tipo === "video" && Date.now() - new Date(envio.criado_em).getTime() < ESPERA_AUDIO_MS) {
+      if (envio.tipo === "video" && Date.now() - new Date(envio.criado_em).getTime() < espera(envio)) {
         // Dá tempo de o áudio da mesa chegar: ele é menor, mais rápido e tem som melhor.
         await supabaseAdmin().from("envios").update({ bloqueado_ate: null, tentativas: envio.tentativas }).eq("id", envio.id);
         return { envio: envio.id, etapa: "recebido" };
