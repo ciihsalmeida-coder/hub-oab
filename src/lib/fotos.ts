@@ -1,9 +1,22 @@
 import "server-only";
+import heicConvert from "heic-convert";
 import sharp from "sharp";
+
+// Foto do iPhone (HEIC): o sharp do servidor não abre esse formato, então vira JPEG antes.
+function eHeic(arquivo: Buffer) {
+  const marca = arquivo.subarray(8, 12).toString("ascii");
+  return arquivo.subarray(4, 8).toString("ascii") === "ftyp" && ["heic", "heix", "hevc", "hevx", "mif1", "msf1"].includes(marca);
+}
+
+async function paraJpegSeHeic(arquivo: Buffer) {
+  if (!eHeic(arquivo)) return arquivo;
+  return Buffer.from(await heicConvert({ buffer: arquivo, format: "JPEG", quality: 0.95 }));
+}
 
 // "Modo automático" das fotos: relight + enhance + colorgrade, iguais em todas as fotos.
 // Os valores são suaves de propósito: as fotos já chegam tratadas pela Central de Mídia.
-export async function tratarFoto(original: Buffer, auto: boolean) {
+export async function tratarFoto(arquivo: Buffer, auto: boolean) {
+  const original = await paraJpegSeHeic(arquivo);
   let base = sharp(original, { failOn: "none" }).rotate().resize(2400, 2400, { fit: "inside", withoutEnlargement: true });
   if (auto) {
     base = base
