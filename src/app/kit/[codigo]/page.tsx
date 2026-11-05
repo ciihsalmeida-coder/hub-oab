@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { Compartilhar, Copiar } from "@/components/Botoes";
+import { Compartilhar, Copiar, Salvar } from "@/components/Botoes";
 import { GaleriaFotos } from "@/components/GaleriaFotos";
 import { Assinatura, FaixaLocal, MzenTopo, SeloMzen } from "@/components/Marca";
-import { LinkContado, Rastrear, VideoContado } from "@/components/Rastrear";
+import { Rastrear, VideoContado } from "@/components/Rastrear";
 import { buscarKit } from "@/lib/kit";
 
 export const dynamic = "force-dynamic";
@@ -100,15 +100,14 @@ export default async function Kit({
                     Canva.
                   </figcaption>
                 )}
-                <LinkContado
-                  tipo="baixou_card"
+                <Salvar
+                  url={c.src}
+                  titulo={`card-congresso-oab-${c.rotulo}`}
+                  tipo="imagem"
+                  evento="baixou_card"
                   alvo={p.slug}
-                  href={c.src}
-                  download={`card-congresso-oab-${c.rotulo}.png`}
-                  className="mt-2 block rounded-full bg-sky py-2 text-center text-sm font-extrabold text-navy uppercase"
-                >
-                  ⬇ Baixar card
-                </LinkContado>
+                  className="mt-2"
+                />
               </figure>
             ))}
           </div>
@@ -170,16 +169,8 @@ export default async function Kit({
                   />
                   <figcaption className="p-3">
                     <p className="leading-tight font-bold">{c.titulo}</p>
-                    <LinkContado
-                      tipo="baixou_video"
-                      alvo={p.slug}
-                      href={c.video_url!}
-                      download
-                      className="mt-3 block rounded-full bg-sky py-2 text-center text-sm font-extrabold text-navy uppercase"
-                    >
-                      ⬇ Baixar vídeo
-                    </LinkContado>
-                    <div className="mt-2 text-center">
+                    <Salvar url={c.video_url} titulo={c.titulo} tipo="video" evento="baixou_video" alvo={p.slug} className="mt-3" />
+                    <div className="mt-2">
                       <Compartilhar titulo={c.titulo} alvo={p.slug} video={c.video_url} />
                     </div>
                   </figcaption>

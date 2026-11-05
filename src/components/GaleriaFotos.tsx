@@ -1,13 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { registrar } from "@/lib/metricas";
+import { Salvar } from "@/components/Botoes";
 
 export type FotoGaleria = { id: string; url: string; miniatura: string | null };
 
 // Galeria para celular: miniaturas na proporção original (sem cortar ninguém) e, ao tocar,
 // a foto em tela cheia com setas, arrastar para os lados e botão de baixar.
-export function GaleriaFotos({ fotos, alvo, nomeArquivo = "foto-congresso-oab" }: { fotos: FotoGaleria[]; alvo?: string; nomeArquivo?: string }) {
+export function GaleriaFotos({
+  fotos,
+  alvo,
+  nomeArquivo = "foto-congresso-oab",
+}: {
+  fotos: FotoGaleria[];
+  alvo?: string;
+  nomeArquivo?: string;
+}) {
   const [aberta, setAberta] = useState<number | null>(null);
 
   return (
@@ -21,12 +29,24 @@ export function GaleriaFotos({ fotos, alvo, nomeArquivo = "foto-congresso-oab" }
             aria-label={`Abrir foto ${i + 1} de ${fotos.length}`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={f.miniatura ?? f.url} alt="" loading="lazy" decoding="async" className="block h-auto w-full" />
+            <img
+              src={f.miniatura ?? f.url}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="block h-auto w-full"
+            />
           </button>
         ))}
       </div>
       {aberta !== null && (
-        <Visualizador fotos={fotos} inicial={aberta} alvo={alvo} nomeArquivo={nomeArquivo} fechar={() => setAberta(null)} />
+        <Visualizador
+          fotos={fotos}
+          inicial={aberta}
+          alvo={alvo}
+          nomeArquivo={nomeArquivo}
+          fechar={() => setAberta(null)}
+        />
       )}
     </>
   );
@@ -46,10 +66,12 @@ function Visualizador({
   fechar: () => void;
 }) {
   const [i, setI] = useState(inicial);
-  const [baixando, setBaixando] = useState(false);
   const toque = useRef<number | null>(null);
   const foto = fotos[i];
-  const ir = useCallback((passo: number) => setI((x) => (x + passo + fotos.length) % fotos.length), [fotos.length]);
+  const ir = useCallback(
+    (passo: number) => setI((x) => (x + passo + fotos.length) % fotos.length),
+    [fotos.length],
+  );
 
   // Trava a rolagem da página e aceita as setas do teclado e o Esc.
   useEffect(() => {
@@ -67,31 +89,8 @@ function Visualizador({
     };
   }, [ir, fechar]);
 
-  // No celular, abre o "Salvar imagem" do próprio aparelho; no computador, baixa o arquivo.
-  async function baixar() {
-    registrar("baixou_foto", alvo);
-    const nome = `${nomeArquivo}-${i + 1}.jpg`;
-    setBaixando(true);
-    try {
-      const r = await fetch(foto.url);
-      const arquivo = new File([await r.blob()], nome, { type: "image/jpeg" });
-      if (navigator.canShare?.({ files: [arquivo] })) {
-        await navigator.share({ files: [arquivo] }).catch(() => {});
-      } else {
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(arquivo);
-        link.download = nome;
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(link.href), 10_000);
-      }
-    } catch {
-      window.open(`${foto.url}?download=${encodeURIComponent(nome)}`, "_blank");
-    } finally {
-      setBaixando(false);
-    }
-  }
-
-  const seta = "grid h-12 w-12 place-items-center rounded-full bg-white/15 text-2xl text-white backdrop-blur active:bg-white/30";
+  const seta =
+    "grid h-12 w-12 place-items-center rounded-full bg-white/15 text-2xl text-white backdrop-blur active:bg-white/30";
   return (
     <div
       role="dialog"
@@ -110,20 +109,37 @@ function Visualizador({
         <span className="text-sm font-bold tabular-nums">
           {i + 1} / {fotos.length}
         </span>
-        <button onClick={fechar} className="grid h-11 w-11 place-items-center rounded-full bg-white/15 text-xl" aria-label="Fechar">
+        <button
+          onClick={fechar}
+          className="grid h-11 w-11 place-items-center rounded-full bg-white/15 text-xl"
+          aria-label="Fechar"
+        >
           ✕
         </button>
       </div>
 
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img key={foto.id} src={foto.url} alt="" className="max-h-full max-w-full object-contain" />
+        <img
+          key={foto.id}
+          src={foto.url}
+          alt=""
+          className="max-h-full max-w-full object-contain"
+        />
         {fotos.length > 1 && (
           <>
-            <button onClick={() => ir(-1)} className={`absolute left-2 ${seta}`} aria-label="Foto anterior">
+            <button
+              onClick={() => ir(-1)}
+              className={`absolute left-2 ${seta}`}
+              aria-label="Foto anterior"
+            >
               ‹
             </button>
-            <button onClick={() => ir(1)} className={`absolute right-2 ${seta}`} aria-label="Próxima foto">
+            <button
+              onClick={() => ir(1)}
+              className={`absolute right-2 ${seta}`}
+              aria-label="Próxima foto"
+            >
               ›
             </button>
           </>
@@ -134,19 +150,26 @@ function Visualizador({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={fotos[(i + 1) % fotos.length].url} alt="" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={fotos[(i - 1 + fotos.length) % fotos.length].url} alt="" />
+            <img
+              src={fotos[(i - 1 + fotos.length) % fotos.length].url}
+              alt=""
+            />
           </div>
         )}
       </div>
 
       <div className="flex justify-center px-4 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
-        <button
-          onClick={baixar}
-          disabled={baixando}
-          className="rounded-full bg-sky px-6 py-3 text-sm font-extrabold text-navy uppercase disabled:opacity-60"
-        >
-          {baixando ? "Preparando…" : "⬇ Baixar foto"}
-        </button>
+        <div className="w-full max-w-xs">
+          {/* Um botão por foto (key): cada foto prepara o próprio arquivo para a galeria do celular */}
+          <Salvar
+            key={foto.id}
+            url={foto.url}
+            titulo={`${nomeArquivo}-${i + 1}`}
+            tipo="imagem"
+            evento="baixou_foto"
+            alvo={alvo}
+          />
+        </div>
       </div>
     </div>
   );

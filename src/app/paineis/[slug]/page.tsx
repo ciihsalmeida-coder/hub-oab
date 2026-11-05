@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Compartilhar } from "@/components/Botoes";
+import { Compartilhar, Salvar } from "@/components/Botoes";
 import { Cadastro } from "@/components/Cadastro";
 import { GaleriaBotao } from "@/components/GaleriaBotao";
 import { GaleriaFotos } from "@/components/GaleriaFotos";
@@ -104,7 +104,8 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
                   <figcaption className="p-3">
                     <p className="leading-tight font-bold">{c.titulo}</p>
                     {c.palestranteId && <p className="text-sm text-muted">{nomePor.get(c.palestranteId)?.nome}</p>}
-                    <div className="mt-3">
+                    <div className="mt-3 space-y-2">
+                      <Salvar url={c.videoUrl} titulo={c.titulo} tipo="video" evento="baixou_video" alvo={painel.slug} />
                       <Compartilhar titulo={c.titulo} alvo={painel.slug} video={c.videoUrl} />
                     </div>
                   </figcaption>
