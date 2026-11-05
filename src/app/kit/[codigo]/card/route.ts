@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { dias } from "@/data/programacao";
-import { ALTURA_FOTO, gerarCard } from "@/lib/card";
+import { ALTURA_FOTO, ALTURA_FOTO_STORY, type Formato, gerarCard } from "@/lib/card";
 import { buscarKit } from "@/lib/kit";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +24,7 @@ async function embutir(url: string, largura: number, altura: number) {
 }
 
 // ?fala=<id> → card com a frase · ?modelo=participacao → "palestrante no painel" · ?modelo=fundo → moldura livre
+// &formato=story → 1080x1920 (Story/Reels); sem ele, feed 1080x1350.
 // &fundo=azul força o fundo do congresso; sem isso, usa uma foto do evento em que o palestrante foi marcado.
 // O navegador guarda o card por 10 min: a imagem da página e o botão "Salvar" usam o mesmo arquivo, sem gerar de novo.
 function comCache(resposta: Response) {
@@ -36,9 +37,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ codi
   if (!kit) return new NextResponse("Não encontrado", { status: 404 });
   const busca = new URL(request.url).searchParams;
   const modelo = busca.get("modelo");
+  const formato: Formato = busca.get("formato") === "story" ? "story" : "feed";
   const p = kit.palestrante;
 
-  if (modelo === "fundo") return comCache(gerarCard({ modelo: "fundo" }));
+  if (modelo === "fundo") return comCache(gerarCard({ modelo: "fundo" }, formato));
 
   const fala = modelo === "participacao" ? null : kit.falas.find((f) => f.id === busca.get("fala"));
   if (modelo !== "participacao" && !fala) return new NextResponse("Não encontrado", { status: 404 });
@@ -47,14 +49,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ codi
   const indice = fala ? kit.falas.indexOf(fala) + 1 : 0;
   const fotoEvento = busca.get("fundo") === "azul" || !kit.fotos.length ? null : kit.fotos[indice % kit.fotos.length].url;
   const [fundo, retrato] = await Promise.all([
-    fotoEvento ? embutir(fotoEvento, 1080, ALTURA_FOTO) : null,
+    fotoEvento ? embutir(fotoEvento, 1080, formato === "story" ? ALTURA_FOTO_STORY : ALTURA_FOTO) : null,
     p.foto_url ? embutir(new URL(p.foto_url, request.url).toString(), 280, 280) : null,
   ]);
   const pessoa = { nome: p.nome, cargo: p.cargo, foto: retrato, fundo };
 
-  if (fala) return comCache(gerarCard({ modelo: "frase", texto: fala.texto, ...pessoa }));
+  if (fala) return comCache(gerarCard({ modelo: "frase", texto: fala.texto, ...pessoa }, formato));
   const painel = kit.painel;
   const dia = dias.find((d) => d.data === painel?.data)?.rotulo ?? "";
   const quando = [painel?.numero ? `Painel ${painel.numero}` : "Abertura", dia, painel?.horario].filter(Boolean).join(" · ");
-  return comCache(gerarCard({ modelo: "participacao", painel: painel?.titulo ?? "", quando, ...pessoa }));
+  return comCache(gerarCard({ modelo: "participacao", painel: painel?.titulo ?? "", quando, ...pessoa }, formato));
 }

@@ -123,5 +123,8 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
    cortes redisparam a cada 8 min; sync de fotos 4 por vez (maxDuration 120); "Refazer com a IA" usa a
    transcrição guardada (a da AssemblyAI é apagada). Prévia de link (opengraph-image.tsx). Card com foto: foto em
    cima (ALTURA_FOTO) e texto na faixa azul embaixo.
-12. Teste de carga (`.github/workflows/carga.yml`, manual; resultados em `testes_carga`): de uma máquina só a
+12. ✅ (05/11) Cards em Feed 4:5 e Story 9:16 (`&formato=story`, chave no kit: `kit/[codigo]/Cards.tsx`). Cards e fotos
+   pré-carregados (um toque abre o menu do celular). Celular sem menu de salvar (navegador dentro do WhatsApp):
+   janela `JanelaSalvar` com "← Voltar" e instrução, sem abrir outra página.
+13. Teste de carga (`.github/workflows/carga.yml`, manual; resultados em `testes_carga`): de uma máquina só a
    Vercel bloqueia com 403 após ~100 pedidos (proteção contra robô). Não mede capacidade real; páginas são ISR/CDN.

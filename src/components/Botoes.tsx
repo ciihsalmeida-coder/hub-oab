@@ -50,6 +50,12 @@ function useArquivoParaCelular(
 ) {
   const [estado, setEstado] = useState<Estado>("livre");
   const [arquivo, setArquivo] = useState<File | null>(null);
+  // Celular que não abre o menu de salvar (ex.: link aberto dentro do WhatsApp/Instagram): mostra o arquivo
+  // numa janela por cima da página, com "Voltar" e a instrução para salvar, em vez de abrir outra página.
+  const [previa, setPrevia] = useState<string | null>(null);
+  const ehCelular = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(pointer: coarse)").matches;
 
   useEffect(() => {
     if (!preCarregar || !url) return;
@@ -93,12 +99,19 @@ function useArquivoParaCelular(
     setEstado("livre");
   }
 
+  function entregar(f: File) {
+    if (ehCelular()) {
+      setPrevia(URL.createObjectURL(f));
+      setEstado("livre");
+    } else baixarNoComputador(f);
+  }
+
   // Devolve false quando não há arquivo para buscar (quem chama decide o que fazer).
   async function usar(extra?: ShareData, soMenu = false) {
     if (!url) return false;
     if (arquivo) {
       if (celularAceita()) await abrirMenu(arquivo, extra);
-      else if (!soMenu) baixarNoComputador(arquivo);
+      else if (!soMenu) entregar(arquivo);
       return true;
     }
     if (soMenu && !celularAceita()) return false;
@@ -109,15 +122,20 @@ function useArquivoParaCelular(
       const f = new File([await r.blob()], nome, { type: tipo });
       setArquivo(f);
       if (celularAceita()) await abrirMenu(f, extra);
-      else baixarNoComputador(f);
+      else entregar(f);
     } catch {
       setEstado("livre");
-      window.open(url, "_blank");
+      setPrevia(url);
     }
     return true;
   }
 
-  return { estado, usar };
+  function fecharPrevia() {
+    if (previa?.startsWith("blob:")) URL.revokeObjectURL(previa);
+    setPrevia(null);
+  }
+
+  return { estado, usar, previa, fecharPrevia };
 }
 
 // Botão principal de cards, fotos e vídeos.
@@ -146,7 +164,12 @@ export function Salvar({
     titulo,
     mime === "video/mp4" ? "mp4" : mime === "image/png" ? "png" : "jpg",
   );
-  const { estado, usar } = useArquivoParaCelular(url, nome, mime, tipo === "imagem");
+  const { estado, usar, previa, fecharPrevia } = useArquivoParaCelular(
+    url,
+    nome,
+    mime,
+    tipo === "imagem",
+  );
   const rotulo =
     estado === "baixando"
       ? tipo === "video"
@@ -156,16 +179,21 @@ export function Salvar({
         ? "⬇ Toque para salvar"
         : "⬇ Salvar no celular";
   return (
-    <button
-      onClick={() => {
-        registrar(evento, alvo);
-        void usar();
-      }}
-      disabled={estado === "baixando" || !url}
-      className={`block w-full rounded-full bg-sky py-2.5 text-center text-sm font-extrabold text-navy uppercase disabled:opacity-60 ${className}`}
-    >
-      {rotulo}
-    </button>
+    <>
+      <button
+        onClick={() => {
+          registrar(evento, alvo);
+          void usar();
+        }}
+        disabled={estado === "baixando" || !url}
+        className={`block w-full rounded-full bg-sky py-2.5 text-center text-sm font-extrabold text-navy uppercase disabled:opacity-60 ${className}`}
+      >
+        {rotulo}
+      </button>
+      {previa && (
+        <JanelaSalvar src={previa} tipo={tipo} fechar={fecharPrevia} />
+      )}
+    </>
   );
 }
 
@@ -211,5 +239,72 @@ export function Compartilhar({
     >
       {rotulo}
     </button>
+  );
+}
+
+// Janela por cima da página (nunca abre outra aba): o arquivo grande, a instrução e o "Voltar".
+function JanelaSalvar({
+  src,
+  tipo,
+  fechar,
+}: {
+  src: string;
+  tipo: "imagem" | "video";
+  fechar: () => void;
+}) {
+  useEffect(() => {
+    const antes = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = antes;
+    };
+  }, []);
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex flex-col bg-black text-white"
+    >
+      <div className="flex items-center px-3 pt-[max(12px,env(safe-area-inset-top))] pb-2">
+        <button
+          onClick={fechar}
+          className="rounded-full bg-white/15 px-4 py-2.5 text-sm font-bold"
+        >
+          ← Voltar
+        </button>
+      </div>
+      <div className="flex min-h-0 flex-1 items-center justify-center px-3">
+        {tipo === "imagem" ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={src}
+            alt=""
+            className="max-h-full max-w-full object-contain"
+          />
+        ) : (
+          <video
+            src={src}
+            controls
+            playsInline
+            className="max-h-full max-w-full"
+          />
+        )}
+      </div>
+      <p className="px-5 pt-3 pb-[max(20px,env(safe-area-inset-bottom))] text-center text-sm leading-snug text-white/85">
+        {tipo === "imagem" ? (
+          <>
+            <strong>Toque e segure a imagem</strong> e escolha{" "}
+            <strong>“Salvar na Fotos”</strong> (iPhone) ou{" "}
+            <strong>“Baixar imagem”</strong> (Android).
+          </>
+        ) : (
+          <>
+            Para salvar o vídeo, abra este link no <strong>Safari</strong> ou no{" "}
+            <strong>Chrome</strong>: toque em <strong>•••</strong> (ou ⋮) e
+            escolha <strong>“Abrir no navegador”</strong>.
+          </>
+        )}
+      </p>
+    </div>
   );
 }

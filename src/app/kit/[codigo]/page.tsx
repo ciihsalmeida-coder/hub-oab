@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Compartilhar, Copiar, Salvar } from "@/components/Botoes";
+import { CardsKit } from "./Cards";
 import { GaleriaFotos } from "@/components/GaleriaFotos";
 import { Assinatura, FaixaLocal, MzenTopo, SeloMzen } from "@/components/Marca";
 import { Rastrear, VideoContado } from "@/components/Rastrear";
@@ -52,10 +53,11 @@ export default async function Kit({
 
         <Secao
           titulo="Cards prontos para postar"
-          subtitulo="Tamanho do feed do Instagram e do LinkedIn. Toque em baixar e poste."
+          subtitulo="Escolha Feed (Instagram e LinkedIn) ou Story, toque em salvar e poste."
         >
-          <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2">
-            {[
+          <CardsKit
+            alvo={p.slug}
+            cards={[
               ...kit.falas.map((f, i) => ({
                 chave: f.id,
                 src: `/kit/${codigo}/card?fala=${f.id}`,
@@ -85,32 +87,8 @@ export default async function Kit({
                 alt: "Moldura do congresso com o meio livre para escrever",
                 rotulo: "moldura",
               },
-            ].map((c) => (
-              <figure key={c.chave} className="w-64 shrink-0 snap-start">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={c.src}
-                  alt={c.alt}
-                  loading="lazy"
-                  className="aspect-[4/5] w-full rounded-2xl shadow-md"
-                />
-                {c.chave === "fundo" && (
-                  <figcaption className="mt-2 text-xs text-muted">
-                    Moldura livre: escreva sua mensagem no Instagram ou no
-                    Canva.
-                  </figcaption>
-                )}
-                <Salvar
-                  url={c.src}
-                  titulo={`card-congresso-oab-${c.rotulo}`}
-                  tipo="imagem"
-                  evento="baixou_card"
-                  alvo={p.slug}
-                  className="mt-2"
-                />
-              </figure>
-            ))}
-          </div>
+            ]}
+          />
         </Secao>
 
         {p.legenda_kit && kit.falas.length > 0 && (
@@ -169,9 +147,20 @@ export default async function Kit({
                   />
                   <figcaption className="p-3">
                     <p className="leading-tight font-bold">{c.titulo}</p>
-                    <Salvar url={c.video_url} titulo={c.titulo} tipo="video" evento="baixou_video" alvo={p.slug} className="mt-3" />
+                    <Salvar
+                      url={c.video_url}
+                      titulo={c.titulo}
+                      tipo="video"
+                      evento="baixou_video"
+                      alvo={p.slug}
+                      className="mt-3"
+                    />
                     <div className="mt-2">
-                      <Compartilhar titulo={c.titulo} alvo={p.slug} video={c.video_url} />
+                      <Compartilhar
+                        titulo={c.titulo}
+                        alvo={p.slug}
+                        video={c.video_url}
+                      />
                     </div>
                   </figcaption>
                 </figure>
@@ -186,7 +175,11 @@ export default async function Kit({
             subtitulo="Toque numa foto para ver em tela cheia, passar para as próximas e baixar."
           >
             <GaleriaFotos
-              fotos={kit.fotos.map((f) => ({ id: f.id, url: f.url, miniatura: f.miniatura_url }))}
+              fotos={kit.fotos.map((f) => ({
+                id: f.id,
+                url: f.url,
+                miniatura: f.miniatura_url,
+              }))}
               alvo={p.slug}
               nomeArquivo={`congresso-oab-${p.slug}`}
             />
@@ -199,7 +192,9 @@ export default async function Kit({
         </p>
         <div className="flex flex-col items-center gap-2 rounded-2xl bg-navy p-5 text-center">
           <SeloMzen texto="Kit produzido por" />
-          <p className="text-xs text-white/60">Cobertura, cortes e tecnologia do XIV Congresso</p>
+          <p className="text-xs text-white/60">
+            Cobertura, cortes e tecnologia do XIV Congresso
+          </p>
         </div>
       </div>
     </main>
