@@ -16,7 +16,10 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 - 09/11 equipe viaja · 11–13/11 conteúdo no mesmo dia · 20/11 hub completo
 
 ## Decisões
-- Endereço fixo: https://hub-oab.vercel.app (admin: /admin).
+- Endereço: https://hub-oab.vercel.app (admin: /admin). Cilene quer subdomínio da Mzen (sugerido oab.mzen.com.br):
+  falta ela adicionar na Vercel + CNAME no DNS do mzen.com.br; depois trocar NEXT_PUBLIC_SITE_URL/padrões (mural, QR,
+  Linha.tsx, Aprovacao.tsx tem URL fixa) e redirecionar o vercel.app (menos /api). DECIDIR ANTES DE IMPRIMIR QR.
+- Galeria com busca por selfie: VZERO face (galeria_url em todos os painéis, definido em 05/11).
 - Um site só (Next.js 16 na Vercel), duas portas:
   - Público: link/QR aberto. Resumo "em 1 minuto", cortes, frases, fotos, botão para a
     galeria contratada com busca por selfie (só link; selfie fica na plataforma, LGPD).
@@ -63,6 +66,19 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 - Proteção de senhas vazadas (Supabase Auth) só no plano Pro: ligar ao assinar.
 - `pg_net` no schema public (aviso do Supabase): limitação conhecida da extensão, sem impacto.
 
+## Pendências (05/11)
+- Cilene: assinar Supabase Pro + Vercel Pro (storage já em 366 MB/1 GB) e créditos de IA; conferir validade do
+  GITHUB_TOKEN; espaço no Google Drive de quem sobe vídeos (vídeo conta no Drive de quem envia); nome/e-mail do
+  aprovador OAB; WhatsApps; carômetro; OK jurídico; domínio; teste de gravação por palestrante (ainda não testado).
+- Eu, até 08/11: apagar painel `ensaio` (e pastas no Drive; a pasta do ensaio está "qualquer pessoa com link = editor"),
+  conteúdo [TESTE] do Painel 1, /exemplo, testes de carga; Cilene → editor; cadastrar aprovador; com Vercel Pro subir
+  maxDuration de /api/ia/processar para 800 e revisar firewall (Wi-Fi do evento = mesmo IP).
+- Ideias não feitas: glossário de nomes/siglas na AssemblyAI (não testado, risco de quebrar), gamificação (passaporte,
+  frase do dia, selo LinkedIn), produto "Mzen hub" multi-evento depois do congresso.
+- Regras para a equipe: pasta geral do painel = UMA gravação (áudio e vídeo da mesma, mesmo nome); gravação de uma
+  pessoa vai em "Gravações por palestrante/<nome>"; fotos de uma pessoa em "Fotos por palestrante/<nome>" (vira card
+  com foto). Kit só depois de aprovar. Arquivo novo na pasta geral substitui o painel (volta a rascunho).
+
 ## Páginas de demonstração
 `/exemplo` (público) e `/exemplo/palestrante` — conteúdo fictício. APAGAR antes do evento.
 
@@ -102,5 +118,10 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
    foto; `&fundo=azul` força o cartaz). A rota do card embute as imagens (fetch com tempo limite + sharp) porque o
    next/og trava buscando arquivos. Fotos HEIC viram JPEG (`heic-convert`). Galeria de fotos em tela cheia
    (`GaleriaFotos`). Compartilhar envia o arquivo do vídeo (Web Share com arquivo).
-11. Teste de carga (`.github/workflows/carga.yml`, manual; resultados em `testes_carga`): de uma máquina só a
+11. ✅ (05/11) Botão único "Salvar no celular" (`Salvar` em Botoes.tsx: baixa e abre o menu do aparelho → galeria;
+   no computador baixa). IA processa 3 gravações por vez; vídeo individual espera 5 min pelo áudio (geral 15);
+   cortes redisparam a cada 8 min; sync de fotos 4 por vez (maxDuration 120); "Refazer com a IA" usa a
+   transcrição guardada (a da AssemblyAI é apagada). Prévia de link (opengraph-image.tsx). Card com foto: foto em
+   cima (ALTURA_FOTO) e texto na faixa azul embaixo.
+12. Teste de carga (`.github/workflows/carga.yml`, manual; resultados em `testes_carga`): de uma máquina só a
    Vercel bloqueia com 403 após ~100 pedidos (proteção contra robô). Não mede capacidade real; páginas são ISR/CDN.
