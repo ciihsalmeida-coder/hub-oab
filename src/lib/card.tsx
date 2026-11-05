@@ -1,7 +1,13 @@
 import { ImageResponse } from "next/og";
-import { LOGO_OAB_AZUL } from "@/lib/logo-oab";
+import { LOGO_OAB_AZUL, LOGO_OAB_BRANCO } from "@/lib/logo-oab";
 
-type Pessoa = { nome: string; cargo: string; foto?: string | null };
+type Pessoa = {
+  nome: string;
+  cargo: string;
+  foto?: string | null;
+  /** Foto do evento (já embutida) para o fundo; sem ela, o degradê do cartaz. */
+  fundo?: string | null;
+};
 
 // Cards do Instagram (1080x1350) na identidade do congresso. Troca de layout: só aqui.
 // - frase: a fala aprovada do palestrante;
@@ -13,6 +19,9 @@ export type Modelo =
   | { modelo: "fundo" };
 
 export function gerarCard(dados: Modelo) {
+  const fundo = dados.modelo === "fundo" ? null : dados.fundo;
+  // Sobre foto, tudo em branco, com sombra escura em cima e embaixo para o texto ler bem.
+  const tinta = fundo ? "#ffffff" : "#0f2a44";
   return new ImageResponse(
     <div
       style={{
@@ -20,11 +29,36 @@ export function gerarCard(dados: Modelo) {
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        background:
-          "linear-gradient(180deg, #f4f6f8 0%, #dfe6ec 28%, #9fb3c4 50%, #3d6585 74%, #17344f 100%)",
-        color: "#0f2a44",
+        position: "relative",
+        background: fundo
+          ? "#0f2a44"
+          : "linear-gradient(180deg, #f4f6f8 0%, #dfe6ec 28%, #9fb3c4 50%, #3d6585 74%, #17344f 100%)",
+        color: tinta,
       }}
     >
+      {fundo && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={fundo}
+          width={1080}
+          height={1350}
+          style={{ position: "absolute", top: 0, left: 0, objectFit: "cover" }}
+          alt=""
+        />
+      )}
+      {fundo && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: 1080,
+            height: 1350,
+            background:
+              "linear-gradient(180deg, rgba(10,28,46,0.82) 0%, rgba(10,28,46,0.25) 26%, rgba(10,28,46,0.15) 42%, rgba(10,28,46,0.78) 64%, rgba(10,28,46,0.94) 100%)",
+          }}
+        />
+      )}
       <div
         style={{
           display: "flex",
@@ -33,7 +67,13 @@ export function gerarCard(dados: Modelo) {
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={LOGO_OAB_AZUL} width={152} height={80} style={{ marginBottom: 28 }} alt="" />
+        <img
+          src={fundo ? LOGO_OAB_BRANCO : LOGO_OAB_AZUL}
+          width={152}
+          height={80}
+          style={{ marginBottom: 28 }}
+          alt=""
+        />
         <div
           style={{
             display: "flex",
@@ -49,7 +89,7 @@ export function gerarCard(dados: Modelo) {
             display: "flex",
             fontSize: 26,
             marginTop: 8,
-            color: "#8e1b1b",
+            color: fundo ? "#7cc7ee" : "#8e1b1b",
             fontWeight: 700,
           }}
         >
@@ -61,13 +101,17 @@ export function gerarCard(dados: Modelo) {
           display: "flex",
           flexDirection: "column",
           flex: 1,
-          justifyContent: "center",
-          padding: "0 80px",
+          justifyContent: fundo ? "flex-end" : "center",
+          padding: fundo ? "0 80px 56px" : "0 80px",
         }}
       >
-        {dados.modelo === "frase" && <Frase texto={dados.texto} />}
+        {dados.modelo === "frase" && <Frase texto={dados.texto} cor={tinta} />}
         {dados.modelo === "participacao" && (
-          <Participacao painel={dados.painel} quando={dados.quando} />
+          <Participacao
+            painel={dados.painel}
+            quando={dados.quando}
+            sobreFoto={Boolean(fundo)}
+          />
         )}
         {dados.modelo !== "fundo" && (
           <Assinatura nome={dados.nome} cargo={dados.cargo} foto={dados.foto} />
@@ -102,7 +146,7 @@ export function gerarCard(dados: Modelo) {
   );
 }
 
-function Frase({ texto }: { texto: string }) {
+function Frase({ texto, cor }: { texto: string; cor: string }) {
   const tamanho = texto.length > 180 ? 50 : texto.length > 110 ? 58 : 66;
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -123,7 +167,7 @@ function Frase({ texto }: { texto: string }) {
           fontSize: tamanho,
           fontWeight: 700,
           lineHeight: 1.18,
-          color: "#0f2a44",
+          color: cor,
         }}
       >
         {texto}
@@ -132,7 +176,15 @@ function Frase({ texto }: { texto: string }) {
   );
 }
 
-function Participacao({ painel, quando }: { painel: string; quando: string }) {
+function Participacao({
+  painel,
+  quando,
+  sobreFoto,
+}: {
+  painel: string;
+  quando: string;
+  sobreFoto: boolean;
+}) {
   const tamanho = painel.length > 90 ? 52 : painel.length > 55 ? 60 : 70;
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -142,7 +194,7 @@ function Participacao({ painel, quando }: { painel: string; quando: string }) {
           fontSize: 30,
           fontWeight: 700,
           letterSpacing: 6,
-          color: "#8e1b1b",
+          color: sobreFoto ? "#7cc7ee" : "#8e1b1b",
         }}
       >
         PALESTRANTE
@@ -164,7 +216,7 @@ function Participacao({ painel, quando }: { painel: string; quando: string }) {
           fontSize: 32,
           fontWeight: 700,
           marginTop: 24,
-          color: "#2c5878",
+          color: sobreFoto ? "rgba(255,255,255,0.85)" : "#2c5878",
         }}
       >
         {quando}

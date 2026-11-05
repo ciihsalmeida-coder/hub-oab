@@ -98,5 +98,9 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
    (`escolher_fontes`): vídeo da mesma pessoa. Geral + individual juntas: resumo da geral; frases/cortes/legenda de
    quem tem gravação própria vêm só dela (a geral descarta os dessa pessoa; a individual apaga os que a geral tinha). Vídeo grande vai do Drive à AssemblyAI em stream (https.request;
    fetch do Node bufferiza tudo). Painel `ensaio` (fora do público) para testes; apagar antes do evento.
-10. Teste de carga (`.github/workflows/carga.yml`, manual; resultados em `testes_carga`): de uma máquina só a
+10. ✅ (05/11) Cards com foto do evento de fundo (fotos aprovadas em que o palestrante foi marcado; cada card uma
+   foto; `&fundo=azul` força o cartaz). A rota do card embute as imagens (fetch com tempo limite + sharp) porque o
+   next/og trava buscando arquivos. Fotos HEIC viram JPEG (`heic-convert`). Galeria de fotos em tela cheia
+   (`GaleriaFotos`). Compartilhar envia o arquivo do vídeo (Web Share com arquivo).
+11. Teste de carga (`.github/workflows/carga.yml`, manual; resultados em `testes_carga`): de uma máquina só a
    Vercel bloqueia com 403 após ~100 pedidos (proteção contra robô). Não mede capacidade real; páginas são ISR/CDN.

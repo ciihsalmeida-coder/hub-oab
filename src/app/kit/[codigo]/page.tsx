@@ -68,6 +68,17 @@ export default async function Kit({
                 alt: "Card de palestrante do painel, sem frase",
                 rotulo: "palestrante",
               },
+              // Com fotos do evento, os cards acima usam a foto de fundo; esta é a versão no azul do cartaz.
+              ...(kit.fotos.length
+                ? [
+                    {
+                      chave: "participacao-azul",
+                      src: `/kit/${codigo}/card?modelo=participacao&fundo=azul`,
+                      alt: "Card de palestrante no fundo azul do congresso",
+                      rotulo: "palestrante-azul",
+                    },
+                  ]
+                : []),
               {
                 chave: "fundo",
                 src: `/kit/${codigo}/card?modelo=fundo`,
