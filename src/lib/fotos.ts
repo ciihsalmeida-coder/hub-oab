@@ -10,8 +10,8 @@ function eHeic(arquivo: Buffer) {
 
 async function paraJpegSeHeic(arquivo: Buffer) {
   if (!eHeic(arquivo)) return arquivo;
-  const bytes = arquivo.buffer.slice(arquivo.byteOffset, arquivo.byteOffset + arquivo.byteLength);
-  return Buffer.from(await heicConvert({ buffer: bytes, format: "JPEG", quality: 0.95 }));
+  // O conversor lê os bytes como lista (Uint8Array/Buffer); a tipagem dele pede ArrayBuffer por engano.
+  return Buffer.from(await heicConvert({ buffer: arquivo as unknown as ArrayBuffer, format: "JPEG", quality: 0.95 }));
 }
 
 // "Modo automático" das fotos: relight + enhance + colorgrade, iguais em todas as fotos.
