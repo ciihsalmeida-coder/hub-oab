@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { registrar, type TipoEvento } from "@/lib/metricas";
 
 export function Copiar({
@@ -39,15 +39,31 @@ function nomeDeArquivo(titulo: string, extensao: string) {
 // Baixa o arquivo e abre o menu do celular ("Salvar imagem"/"Salvar vídeo" vai direto para a galeria;
 // também dá para mandar no WhatsApp etc.). No computador, baixa o arquivo normalmente.
 // O iPhone só abre o menu logo após o toque: se o arquivo demorar, o botão pede um segundo toque.
+// Por isso imagens (cards e fotos) já vêm preparadas quando a página abre (`preCarregar`).
 type Estado = "livre" | "baixando" | "pronto";
 
 function useArquivoParaCelular(
   url: string | null | undefined,
   nome: string,
   tipo: string,
+  preCarregar = false,
 ) {
   const [estado, setEstado] = useState<Estado>("livre");
   const [arquivo, setArquivo] = useState<File | null>(null);
+
+  useEffect(() => {
+    if (!preCarregar || !url) return;
+    let ativo = true;
+    fetch(url)
+      .then((r) => (r.ok ? r.blob() : null))
+      .then((b) => {
+        if (ativo && b) setArquivo(new File([b], nome, { type: tipo }));
+      })
+      .catch(() => {});
+    return () => {
+      ativo = false;
+    };
+  }, [preCarregar, url, nome, tipo]);
 
   const celularAceita = () =>
     typeof navigator !== "undefined" &&
@@ -130,7 +146,7 @@ export function Salvar({
     titulo,
     mime === "video/mp4" ? "mp4" : mime === "image/png" ? "png" : "jpg",
   );
-  const { estado, usar } = useArquivoParaCelular(url, nome, mime);
+  const { estado, usar } = useArquivoParaCelular(url, nome, mime, tipo === "imagem");
   const rotulo =
     estado === "baixando"
       ? tipo === "video"

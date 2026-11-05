@@ -25,6 +25,12 @@ async function embutir(url: string, largura: number, altura: number) {
 
 // ?fala=<id> → card com a frase · ?modelo=participacao → "palestrante no painel" · ?modelo=fundo → moldura livre
 // &fundo=azul força o fundo do congresso; sem isso, usa uma foto do evento em que o palestrante foi marcado.
+// O navegador guarda o card por 10 min: a imagem da página e o botão "Salvar" usam o mesmo arquivo, sem gerar de novo.
+function comCache(resposta: Response) {
+  resposta.headers.set("Cache-Control", "private, max-age=600");
+  return resposta;
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ codigo: string }> }) {
   const kit = await buscarKit((await params).codigo);
   if (!kit) return new NextResponse("Não encontrado", { status: 404 });
@@ -32,7 +38,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ codi
   const modelo = busca.get("modelo");
   const p = kit.palestrante;
 
-  if (modelo === "fundo") return gerarCard({ modelo: "fundo" });
+  if (modelo === "fundo") return comCache(gerarCard({ modelo: "fundo" }));
 
   const fala = modelo === "participacao" ? null : kit.falas.find((f) => f.id === busca.get("fala"));
   if (modelo !== "participacao" && !fala) return new NextResponse("Não encontrado", { status: 404 });
@@ -46,9 +52,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ codi
   ]);
   const pessoa = { nome: p.nome, cargo: p.cargo, foto: retrato, fundo };
 
-  if (fala) return gerarCard({ modelo: "frase", texto: fala.texto, ...pessoa });
+  if (fala) return comCache(gerarCard({ modelo: "frase", texto: fala.texto, ...pessoa }));
   const painel = kit.painel;
   const dia = dias.find((d) => d.data === painel?.data)?.rotulo ?? "";
   const quando = [painel?.numero ? `Painel ${painel.numero}` : "Abertura", dia, painel?.horario].filter(Boolean).join(" · ");
-  return gerarCard({ modelo: "participacao", painel: painel?.titulo ?? "", quando, ...pessoa });
+  return comCache(gerarCard({ modelo: "participacao", painel: painel?.titulo ?? "", quando, ...pessoa }));
 }
