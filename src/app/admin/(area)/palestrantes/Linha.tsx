@@ -67,8 +67,14 @@ export function Linha(props: { p: P; codigo: string; enviadoEm: string | null; f
           }
           className="mt-3 space-y-2 text-sm"
         >
-          <input name="nome" defaultValue={p.nome} className="w-full rounded-lg border border-line px-3 py-2" />
-          <textarea name="cargo" defaultValue={p.cargo} rows={2} className="w-full rounded-lg border border-line px-3 py-2" />
+          <label className="block">
+            <span className="text-xs font-bold text-muted">Nome (aparece no kit, no card e na mensagem do WhatsApp)</span>
+            <input name="nome" defaultValue={p.nome} placeholder="Nome e sobrenome" className="mt-1 w-full rounded-lg border border-line px-3 py-2" />
+          </label>
+          <label className="block">
+            <span className="text-xs font-bold text-muted">Cargo</span>
+            <textarea name="cargo" defaultValue={p.cargo} rows={2} placeholder="Ex.: Advogado e Professor" className="mt-1 w-full rounded-lg border border-line px-3 py-2" />
+          </label>
           <input
             name="whatsapp"
             defaultValue={p.whatsapp ?? ""}
