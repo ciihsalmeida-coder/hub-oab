@@ -50,8 +50,11 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 - Painel 1 tem conteúdo "[TESTE]" para Cilene testar o fluxo. Limpar antes do evento.
 
 ## Google Drive
-- Pasta raiz: "Congresso OAB 2026 · Fotos e cortes do hub" (id 1S4UKRokkKPsYD6gZudhxVM292-PgZUu0),
-  no Drive de ciihs.almeida@gmail.com, compartilhada como editor com o robô
+- Pasta raiz (desde 06/11): "Congresso OAB 2026 · Hub" (id 1lGLnqcFRI6xfguGP7KVLdqBiFCeG3fCr), dono
+  midialapa@gmail.com, editores luana@mzen.com.br e o robô. Estava "qualquer pessoa com o link = editor" (pedir para
+  restringir). A antiga (1S4UKRokkKPsYD6gZudhxVM292-PgZUu0, Drive de ciihs.almeida@gmail.com) ficou com os testes.
+  Trocar de pasta: mudar PASTA_RAIZ e rodar /api/drive/preparar (o upsert troca os drive_id em pastas_drive).
+  Arquivo enviado conta no Drive de quem envia, não do dono da pasta. Compartilhada como editor com o robô
   hub-oab-drive@buoyant-climate-513113-q0.iam.gserviceaccount.com (projeto "My First Project").
 - Chave do robô na Vercel: GOOGLE_SERVICE_ACCOUNT_JSON (Secret).
 - pg_cron "sincronizar-drive" chama /api/drive/sincronizar a cada 2 min (token em public.segredos).

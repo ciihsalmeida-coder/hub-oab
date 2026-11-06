@@ -4,9 +4,10 @@ import { GoogleAuth } from "google-auth-library";
 import { tratarFoto } from "@/lib/fotos";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
-// Pasta principal no Drive da Cilene, compartilhada com o robô (conta de serviço).
+// Pasta principal "Congresso OAB 2026 · Hub" (Drive da equipe Mzen, desde 06/11), compartilhada com o robô
+// (conta de serviço). A pasta antiga, no Drive da Cilene, era 1S4UKRokkKPsYD6gZudhxVM292-PgZUu0.
 // Pode ficar num "Drive compartilhado" (Google Workspace): as chamadas abaixo usam `supportsAllDrives`.
-export const PASTA_RAIZ = "1S4UKRokkKPsYD6gZudhxVM292-PgZUu0";
+export const PASTA_RAIZ = "1lGLnqcFRI6xfguGP7KVLdqBiFCeG3fCr";
 // Vale para pastas comuns e para Drives compartilhados.
 const TODOS_OS_DRIVES = { supportsAllDrives: true, includeItemsFromAllDrives: true } as const;
 const PASTA = "application/vnd.google-apps.folder";
