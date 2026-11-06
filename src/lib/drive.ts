@@ -5,7 +5,10 @@ import { tratarFoto } from "@/lib/fotos";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 // Pasta principal no Drive da Cilene, compartilhada com o robô (conta de serviço).
+// Pode ficar num "Drive compartilhado" (Google Workspace): as chamadas abaixo usam `supportsAllDrives`.
 export const PASTA_RAIZ = "1S4UKRokkKPsYD6gZudhxVM292-PgZUu0";
+// Vale para pastas comuns e para Drives compartilhados.
+const TODOS_OS_DRIVES = { supportsAllDrives: true, includeItemsFromAllDrives: true } as const;
 const PASTA = "application/vnd.google-apps.folder";
 const LIMITE_VIDEO_MB = 45; // limite por arquivo no plano gratuito do Supabase (50 MB)
 
@@ -21,11 +24,12 @@ export function cliente() {
 
 async function criarPasta(api: drive_v3.Drive, nome: string, pai: string) {
   const existente = await api.files.list({
+    ...TODOS_OS_DRIVES,
     q: `'${pai}' in parents and name = '${nome.replace(/'/g, "\\'")}' and mimeType = '${PASTA}' and trashed = false`,
     fields: "files(id)",
   });
   if (existente.data.files?.[0]?.id) return existente.data.files[0].id;
-  const nova = await api.files.create({ requestBody: { name: nome, mimeType: PASTA, parents: [pai] }, fields: "id" });
+  const nova = await api.files.create({ supportsAllDrives: true, requestBody: { name: nome, mimeType: PASTA, parents: [pai] }, fields: "id" });
   return nova.data.id!;
 }
 
@@ -100,6 +104,7 @@ export async function sincronizar(orcamentoMs = 90_000): Promise<Resultado> {
     let pageToken: string | undefined;
     do {
       const r = await api.files.list({
+        ...TODOS_OS_DRIVES,
         q: `(${lote.map((id) => `'${id}' in parents`).join(" or ")}) and trashed = false and (mimeType contains 'image/' or mimeType contains 'video/' or mimeType contains 'audio/')`,
         fields: "nextPageToken, files(id, name, mimeType, size, parents)",
         pageSize: 1000,
@@ -163,7 +168,7 @@ async function registrarEnvio(arquivo: drive_v3.Schema$File, pasta: Pasta) {
 }
 
 export async function baixar(api: drive_v3.Drive, id: string) {
-  const r = await api.files.get({ fileId: id, alt: "media" }, { responseType: "arraybuffer" });
+  const r = await api.files.get({ fileId: id, alt: "media", supportsAllDrives: true }, { responseType: "arraybuffer" });
   return Buffer.from(r.data as ArrayBuffer);
 }
 

@@ -59,7 +59,7 @@ def token_drive():
 
 
 def baixar_drive(file_id, destino):
-    req = urllib.request.Request(f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media")
+    req = urllib.request.Request(f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media&supportsAllDrives=true")
     req.add_header("Authorization", f"Bearer {token_drive()}")
     with urllib.request.urlopen(req, timeout=3600) as r, open(destino, "wb") as f:
         while bloco := r.read(8 * 1024 * 1024):

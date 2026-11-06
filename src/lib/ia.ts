@@ -148,11 +148,11 @@ export async function processarProximo(): Promise<{ envio?: string; etapa?: stri
         return { envio: envio.id, etapa: "ignorado" };
       }
       const api = clienteDrive();
-      const meta = await api.files.get({ fileId: envio.origem_drive_id!, fields: "size" });
+      const meta = await api.files.get({ fileId: envio.origem_drive_id!, fields: "size", supportsAllDrives: true });
       const mb = Number(meta.data.size ?? 0) / 1024 / 1024;
       if (mb > LIMITE_ENVIO_MB) throw new Error(`Arquivo com ${mb.toFixed(0)} MB. Envie só o áudio (MP3 ou WAV) do painel.`);
       // Passa o arquivo do Drive direto para a AssemblyAI, aos pedaços: um vídeo de 600 MB não cabe na memória.
-      const arquivo = await api.files.get({ fileId: envio.origem_drive_id!, alt: "media" }, { responseType: "stream" });
+      const arquivo = await api.files.get({ fileId: envio.origem_drive_id!, alt: "media", supportsAllDrives: true }, { responseType: "stream" });
       const upload = await enviarParaAssembly(arquivo.data as Readable);
       const transcricao = await assembly("/transcript", {
         method: "POST",
