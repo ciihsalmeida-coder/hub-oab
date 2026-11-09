@@ -129,5 +129,9 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 12. ✅ (05/11) Cards em Feed 4:5 e Story 9:16 (`&formato=story`, chave no kit: `kit/[codigo]/Cards.tsx`). Cards e fotos
    pré-carregados (um toque abre o menu do celular). Celular sem menu de salvar (navegador dentro do WhatsApp):
    janela `JanelaSalvar` com "← Voltar" e instrução, sem abrir outra página.
-13. Teste de carga (`.github/workflows/carga.yml`, manual; resultados em `testes_carga`): de uma máquina só a
+13. ✅ (09/11) Card com foto no modelo da designer: moldura azul #0b1866, foto no quadro, logo OAB + traço + aspas +
+   frase no canto inferior esquerdo, nome e cargo, faixa clara com o nome do congresso (FOTO_CARD dá o recorte).
+   Fonte Montserrat embutida (`src/lib/fonte-montserrat.ts`, @fontsource 5.2.8, OFL) em todos os cards.
+   QR não foi impresso: só no mural (TV/telão), que usa o endereço atual.
+14. Teste de carga (`.github/workflows/carga.yml`, manual; resultados em `testes_carga`): de uma máquina só a
    Vercel bloqueia com 403 após ~100 pedidos (proteção contra robô). Não mede capacidade real; páginas são ISR/CDN.

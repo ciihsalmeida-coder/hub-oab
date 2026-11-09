@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { MONTSERRAT } from "@/lib/fonte-montserrat";
 import { LOGO_OAB_AZUL, LOGO_OAB_BRANCO } from "@/lib/logo-oab";
 
 type Pessoa = {
@@ -154,7 +155,7 @@ export function gerarCard(dados: Modelo, formato: Formato = "feed") {
         </div>
       </div>
     </div>,
-    { width: 1080, height: altura },
+    { width: 1080, height: altura, fonts: MONTSERRAT },
   );
 }
 
@@ -294,39 +295,40 @@ function Assinatura({ nome, cargo, foto }: Pessoa) {
   );
 }
 
-// Altura da foto no card com foto (o resto é a faixa azul com o texto). A rota usa o mesmo valor ao recortar.
-export const ALTURA_FOTO = 720;
-export const ALTURA_FOTO_STORY = 1040;
+// Card com foto (modelo da designer): moldura azul, a foto ocupando o quadro, e no canto inferior esquerdo
+// o logo da OAB, um traço azul, as aspas e a frase; embaixo, uma faixa clara com o nome do congresso.
+// No Story a faixa é mais alta, para o nome do congresso não ficar atrás do campo de resposta do Instagram.
+const MOLDURA = 25;
+const FAIXA: Record<Formato, number> = { feed: 155, story: 330 };
+// Tamanho da área da foto: a rota recorta a foto do evento exatamente nesse tamanho.
+export const FOTO_CARD: Record<Formato, { largura: number; altura: number }> = {
+  feed: { largura: 1080 - 2 * MOLDURA, altura: 1350 - MOLDURA - FAIXA.feed },
+  story: { largura: 1080 - 2 * MOLDURA, altura: 1920 - MOLDURA - FAIXA.story },
+};
+const AZUL_MOLDURA = "#0b1866";
 
-// Card com foto do palestrante: a foto em cima, inteira (nada escrito sobre o rosto), e o texto numa faixa
-// azul embaixo. Só o logo da OAB fica sobre a foto, no canto, com uma sombra leve.
 function cardComFoto(
   dados: Exclude<Modelo, { modelo: "fundo" }> & { fundo: string },
   formato: Formato,
 ) {
-  const story = formato === "story";
+  const { largura, altura } = FOTO_CARD[formato];
   const frase = dados.modelo === "frase" ? dados.texto : null;
-  const alturaFoto = story
-    ? frase && frase.length > 160
-      ? 900
-      : ALTURA_FOTO_STORY
-    : frase && frase.length > 160
-      ? 600
-      : ALTURA_FOTO;
   const tamanhoFrase = !frase
     ? 0
-    : frase.length > 200
-      ? 38
-      : frase.length > 120
-        ? 44
-        : 52;
+    : frase.length > 220
+      ? 26
+      : frase.length > 140
+        ? 30
+        : frase.length > 80
+          ? 34
+          : 40;
   const tamanhoPainel =
     dados.modelo === "participacao"
       ? dados.painel.length > 90
-        ? 40
+        ? 32
         : dados.painel.length > 55
-          ? 46
-          : 54
+          ? 38
+          : 44
       : 0;
   return new ImageResponse(
     <div
@@ -335,158 +337,188 @@ function cardComFoto(
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        background: "#0f2a44",
-        color: "white",
-        paddingBottom: story ? MARGEM_STORY - 80 : 0,
+        background: AZUL_MOLDURA,
+        fontFamily: "Montserrat",
+        padding: `${MOLDURA}px ${MOLDURA}px 0`,
       }}
     >
       <div
         style={{
           display: "flex",
           position: "relative",
-          width: 1080,
-          height: alturaFoto,
+          width: largura,
+          height: altura,
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={dados.fundo}
-          width={1080}
-          height={alturaFoto}
+          width={largura}
+          height={altura}
           style={{ objectFit: "cover" }}
           alt=""
+        />
+        {/* Sombra azul de baixo para cima e da esquerda, onde fica o texto */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: largura,
+            height: altura,
+            background:
+              "linear-gradient(180deg, rgba(11,24,102,0) 38%, rgba(11,24,102,0.55) 62%, rgba(9,18,80,0.92) 100%)",
+          }}
         />
         <div
           style={{
             position: "absolute",
             top: 0,
             left: 0,
-            width: 1080,
-            height: alturaFoto,
+            width: largura,
+            height: altura,
             background:
-              "linear-gradient(180deg, rgba(10,28,46,0.55) 0%, rgba(10,28,46,0) 22%, rgba(10,28,46,0) 82%, rgba(15,42,68,1) 100%)",
+              "linear-gradient(90deg, rgba(9,18,80,0.45) 0%, rgba(9,18,80,0) 55%)",
           }}
         />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={LOGO_OAB_BRANCO}
-          width={130}
-          height={68}
+        <div
           style={{
             position: "absolute",
-            top: story ? MARGEM_STORY - 40 : 48,
-            left: 64,
+            left: 0,
+            bottom: 0,
+            width: largura,
+            display: "flex",
+            flexDirection: "column",
+            padding: "0 96px 64px",
+            color: "white",
           }}
-          alt=""
-        />
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={LOGO_OAB_BRANCO} width={124} height={65} alt="" />
+          <div
+            style={{
+              display: "flex",
+              width: 132,
+              height: 4,
+              background: "#5fb8d9",
+              marginTop: 34,
+              marginBottom: 30,
+            }}
+          />
+          {frase ? (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: 120,
+                  fontWeight: 800,
+                  lineHeight: 0.7,
+                  height: 64,
+                }}
+              >
+                “
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: tamanhoFrase,
+                  fontWeight: 500,
+                  lineHeight: 1.28,
+                  marginTop: 18,
+                  maxWidth: 850,
+                }}
+              >
+                {frase}
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: 22,
+                  fontWeight: 700,
+                  letterSpacing: 6,
+                  color: "#8fd0ee",
+                }}
+              >
+                PALESTRANTE
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: tamanhoPainel,
+                  fontWeight: 700,
+                  lineHeight: 1.15,
+                  marginTop: 14,
+                  maxWidth: 860,
+                }}
+              >
+                {dados.modelo === "participacao" ? dados.painel : ""}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: 24,
+                  fontWeight: 500,
+                  marginTop: 14,
+                  color: "rgba(255,255,255,0.85)",
+                }}
+              >
+                {dados.modelo === "participacao" ? dados.quando : ""}
+              </div>
+            </div>
+          )}
+          <div
+            style={{ display: "flex", flexDirection: "column", marginTop: 30 }}
+          >
+            <div style={{ display: "flex", fontSize: 26, fontWeight: 700 }}>
+              {dados.nome}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                fontSize: 19,
+                fontWeight: 400,
+                color: "rgba(255,255,255,0.8)",
+                marginTop: 4,
+              }}
+            >
+              {dados.cargo}
+            </div>
+          </div>
+        </div>
       </div>
       <div
         style={{
           display: "flex",
           flexDirection: "column",
-          flex: 1,
-          justifyContent: "space-between",
-          padding: story ? "36px 72px 48px" : "28px 72px 36px",
+          alignItems: "center",
+          justifyContent: formato === "story" ? "flex-start" : "center",
+          paddingTop: formato === "story" ? 64 : 0,
+          margin: `0 -${MOLDURA}px`,
+          height: FAIXA[formato],
+          background: "#eef0f3",
+          color: "#0f1f5c",
+          fontSize: 27,
+          lineHeight: 1.3,
+          textAlign: "center",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            fontSize: 22,
-            fontWeight: 700,
-            letterSpacing: 2,
-            color: "#7cc7ee",
-          }}
-        >
-          XIV CONGRESSO NACIONAL DE DIREITO MARÍTIMO, PORTUÁRIO E ADUANEIRO
+        <div style={{ display: "flex" }}>
+          <span style={{ fontWeight: 800 }}>XIV CONGRESSO</span>
+          <span style={{ fontWeight: 500, marginLeft: 8 }}>
+            NACIONAL DE DIREITO MARÍTIMO, PORTUÁRIO
+          </span>
         </div>
-        {frase ? (
-          <div
-            style={{
-              display: "flex",
-              fontSize: tamanhoFrase,
-              fontWeight: 700,
-              lineHeight: 1.18,
-            }}
-          >
-            “{frase}”
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div
-              style={{
-                display: "flex",
-                fontSize: 24,
-                fontWeight: 700,
-                letterSpacing: 6,
-                color: "#7cc7ee",
-              }}
-            >
-              PALESTRANTE
-            </div>
-            <div
-              style={{
-                display: "flex",
-                fontSize: tamanhoPainel,
-                fontWeight: 700,
-                lineHeight: 1.12,
-                marginTop: 12,
-              }}
-            >
-              {dados.modelo === "participacao" ? dados.painel : ""}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                fontSize: 26,
-                marginTop: 14,
-                color: "rgba(255,255,255,0.8)",
-              }}
-            >
-              {dados.modelo === "participacao" ? dados.quando : ""}
-            </div>
-          </div>
-        )}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", fontSize: 38, fontWeight: 700 }}>
-            {dados.nome}
-          </div>
-          <div
-            style={{
-              display: "flex",
-              fontSize: 24,
-              color: "rgba(255,255,255,0.8)",
-            }}
-          >
-            {dados.cargo}
-          </div>
-        </div>
-      </div>
-      <div style={{ display: "flex", fontSize: 26, fontWeight: 700 }}>
-        <div style={{ display: "flex", width: 40, background: "#8e1b1b" }} />
-        <div
-          style={{
-            display: "flex",
-            flex: 1,
-            background: "#0a1f33",
-            color: "#2fa9df",
-            padding: "22px 32px",
-          }}
-        >
-          COSTÃO DO SANTINHO · FLORIANÓPOLIS
-        </div>
-        <div
-          style={{
-            display: "flex",
-            background: "#2fa9df",
-            color: "#0f2a44",
-            padding: "22px 32px",
-          }}
-        >
-          11 A 13/11
+        <div style={{ display: "flex" }}>
+          <span style={{ fontWeight: 500 }}>E ADUANEIRO DAS</span>
+          <span style={{ fontWeight: 800, marginLeft: 8 }}>
+            SECCIONAIS OAB 2026
+          </span>
         </div>
       </div>
     </div>,
-    { width: 1080, height: ALTURA[formato] },
+    { width: 1080, height: ALTURA[formato], fonts: MONTSERRAT },
   );
 }

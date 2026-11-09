@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { dias } from "@/data/programacao";
-import { ALTURA_FOTO, ALTURA_FOTO_STORY, type Formato, gerarCard } from "@/lib/card";
+import { FOTO_CARD, type Formato, gerarCard } from "@/lib/card";
 import { buscarKit } from "@/lib/kit";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +49,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ codi
   const indice = fala ? kit.falas.indexOf(fala) + 1 : 0;
   const fotoEvento = busca.get("fundo") === "azul" || !kit.fotos.length ? null : kit.fotos[indice % kit.fotos.length].url;
   const [fundo, retrato] = await Promise.all([
-    fotoEvento ? embutir(fotoEvento, 1080, formato === "story" ? ALTURA_FOTO_STORY : ALTURA_FOTO) : null,
+    fotoEvento ? embutir(fotoEvento, FOTO_CARD[formato].largura, FOTO_CARD[formato].altura) : null,
     p.foto_url ? embutir(new URL(p.foto_url, request.url).toString(), 280, 280) : null,
   ]);
   const pessoa = { nome: p.nome, cargo: p.cargo, foto: retrato, fundo };
