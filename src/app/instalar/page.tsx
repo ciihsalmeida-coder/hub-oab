@@ -37,9 +37,9 @@ export default async function InstalarPage() {
               priority
             />
             <div>
-              <p className="text-xs font-extrabold tracking-[0.2em] text-wine uppercase">App do congresso</p>
-              <h1 className="text-2xl leading-tight font-extrabold text-navy sm:text-4xl">Leve o congresso no celular</h1>
-              <p className="mt-1 text-sm font-semibold text-navy/80 sm:text-base">
+              <p className="text-xs font-extrabold tracking-[0.2em] text-sky uppercase">App do congresso</p>
+              <h1 className="text-2xl leading-tight font-extrabold text-white sm:text-4xl">Leve o congresso no celular</h1>
+              <p className="mt-1 text-sm font-semibold text-white/90 sm:text-base">
                 Sem loja, sem cadastro, em 30 segundos.
               </p>
             </div>

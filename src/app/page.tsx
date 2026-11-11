@@ -20,14 +20,14 @@ export default async function Home() {
           <div className="mt-8">
             <TituloCongresso />
           </div>
-          <p className="mt-6 max-w-md text-sm font-semibold text-navy/80">
+          <p className="mt-6 max-w-md text-sm font-medium text-white/90">
             Resumos, cortes em vídeo e fotos de cada painel, publicados no mesmo dia.
           </p>
           <div className="mt-5 space-y-3">
             <GaleriaBotao url={paineis[0]?.galeriaUrl ?? undefined} />
             <Link
               href="/instalar"
-              className="block rounded-2xl bg-navy px-5 py-3 text-center text-sm font-bold text-white shadow-sm"
+              className="block rounded-2xl bg-white/15 px-5 py-3 text-center text-sm font-bold text-white backdrop-blur"
             >
               📲 Instale o app do congresso no celular
             </Link>

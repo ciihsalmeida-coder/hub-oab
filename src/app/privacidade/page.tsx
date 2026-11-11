@@ -14,7 +14,7 @@ export default function Privacidade() {
           <div className="mt-5">
             <Assinatura />
           </div>
-          <h1 className="mt-8 text-3xl font-extrabold text-navy">Aviso de privacidade</h1>
+          <h1 className="mt-8 text-3xl font-extrabold text-white">Aviso de privacidade</h1>
         </div>
       </header>
       <article className="mx-auto max-w-2xl space-y-5 px-4 py-8 leading-relaxed">
