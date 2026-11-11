@@ -83,7 +83,9 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
   com foto). Kit só depois de aprovar. Arquivo novo na pasta geral substitui o painel (volta a rascunho).
 
 ## Limpeza antes do evento (11/11)
-Apagados: painel `ensaio` (registros e arquivos), fala "[TESTE]" do Painel 1 e as páginas `/exemplo`. O código que
+Hub zerado: painel `ensaio`, conteúdo de teste da Abertura (falas, cortes, fotos, envios e arquivos), resumos de todos
+os painéis, "[TESTE]" do Painel 1, cadastros, métricas, resumos do dia, testes de carga, WhatsApps e legendas dos
+palestrantes, páginas `/exemplo`. O kit do Amyr ganhou token novo (o link de teste não abre mais). O código que
 esconde o ensaio do público (`src/lib/ensaio.ts`) ficou, para um próximo teste. A pasta do ensaio no Drive continua lá.
 
 ## Próximos passos
