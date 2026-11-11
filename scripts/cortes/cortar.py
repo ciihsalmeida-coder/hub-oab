@@ -26,7 +26,7 @@ SUPABASE_KEY = os.environ["SUPABASE_SECRET_KEY"]
 PAINEL = sys.argv[1]
 TAXA = 100  # quadros de energia por segundo para o alinhamento
 MAX_TENTATIVAS = 3
-CONFIANCA_MINIMA = 1.5  # abaixo disso o áudio e o vídeo provavelmente não são da mesma gravação
+CONFIANCA_MINIMA = 8  # abaixo disso o áudio e o vídeo provavelmente não são da mesma gravação
 
 
 def supabase(metodo, caminho, corpo=None, cabecalhos=None, bruto=False):
@@ -82,21 +82,29 @@ def energia(caminho, segundos):
 
 
 def atraso_video(audio, video):
-    """Segundos a somar aos tempos do áudio da mesa para achar o mesmo instante no vídeo."""
-    a = energia(audio, 25 * 60)
-    v = energia(video, 25 * 60)
+    """Segundos a somar aos tempos do áudio da mesa para achar o mesmo instante no vídeo.
+
+    Procura em qualquer posição: o vídeo pode ser um trecho curto (a câmera grava em vários arquivos)
+    dentro de uma parte longa do áudio, ou começar antes dele. Só vale se pelo menos metade do mais
+    curto dos dois (e no mínimo 1 minuto) se sobrepõe.
+    """
+    a = energia(audio, 70 * 60)
+    v = energia(video, 70 * 60)
     tamanho = 1 << int(np.ceil(np.log2(len(a) + len(v))))
     corr = np.fft.irfft(np.fft.rfft(v, tamanho) * np.conj(np.fft.rfft(a, tamanho)), tamanho)
-    # Procura até 20 minutos para cada lado, sem passar da metade do trecho analisado,
-    # e divide pela sobreposição para não favorecer deslocamentos com pouca sobreposição.
-    limite = min(20 * 60 * TAXA, min(len(a), len(v)) // 2)
-    deslocamentos = np.concatenate([np.arange(0, limite + 1), np.arange(-limite, 0)])
-    candidatos = np.concatenate([corr[: limite + 1], corr[-limite:]])
-    sobreposicao = np.minimum(len(v) - deslocamentos, len(a) + deslocamentos).clip(min=1)
-    sobreposicao = np.minimum(sobreposicao, min(len(a), len(v)))
-    candidatos = candidatos / sobreposicao
-    melhor = int(np.argmax(candidatos))
-    confianca = float(candidatos[melhor] / (np.sort(candidatos)[-50:].mean() + 1e-6))
+    deslocamentos = np.arange(-(len(a) - 1), len(v))
+    valores = corr[deslocamentos % tamanho]
+    sobreposicao = np.minimum(len(a), len(v) - deslocamentos) - np.maximum(0, -deslocamentos)
+    minimo = max(60 * TAXA, min(len(a), len(v)) // 2)
+    validos = sobreposicao >= minimo
+    if not validos.any():
+        return 0.0, 0.0
+    normalizados = np.where(validos, valores / np.maximum(sobreposicao, 1), -np.inf)
+    melhor = int(np.argmax(normalizados))
+    # Confiança: quanto o pico se destaca do resto (em desvios-padrão). Gravações diferentes ficam perto de 5;
+    # a mesma gravação passa de 10 com folga.
+    resto = normalizados[validos]
+    confianca = float((normalizados[melhor] - np.median(resto)) / (resto.std() + 1e-6))
     return deslocamentos[melhor] / TAXA, confianca
 
 
@@ -232,13 +240,14 @@ def escolher_fontes(cortes, envios):
             yield lista, None, None
             continue
         if base["tipo"] == "video":
-            yield lista, base, base  # transcrito do próprio vídeo: não precisa sincronizar
+            yield lista, base, [base]  # transcrito do próprio vídeo: não precisa sincronizar
             continue
         videos = [e for e in envios if e["tipo"] == "video" and e.get("palestrante_id") == base.get("palestrante_id")]
-        # Se houver mais de um vídeo, prefere o de mesmo nome do áudio transcrito (ex.: painel.mp3 e painel.mp4).
+        # A câmera costuma gravar em vários arquivos: todos entram, o de mesmo nome do áudio primeiro
+        # (ex.: painel.mp3 e painel.mp4); depois na ordem do nome. Cada corte usa o vídeo onde o trecho está.
         radical = os.path.splitext(base["nome"] or "")[0]
-        video = next((v for v in videos if os.path.splitext(v["nome"] or "")[0] == radical), videos[0] if videos else None)
-        yield lista, base, video
+        videos.sort(key=lambda v: (os.path.splitext(v["nome"] or "")[0] != radical, v["nome"] or ""))
+        yield lista, base, videos
 
 
 def cortar():
@@ -266,81 +275,95 @@ def cortar():
             "order": "criado_em.desc",
         },
     )
-    for lista, base, video in escolher_fontes(cortes, envios):
-        if not base or not video:
+    for lista, base, videos in escolher_fontes(cortes, envios):
+        if not base or not videos:
             print(f"Falta o vídeo ou a transcrição de {len(lista)} corte(s); ficam esperando.")
             continue
-        cortar_grupo(lista, base, video)
+        cortar_grupo(lista, base, videos)
 
 
-def cortar_grupo(cortes, base, video):
+def cortar_grupo(cortes, base, videos):
+    """Corta os trechos de uma gravação. Com vários vídeos, cada corte sai do vídeo que contém o trecho."""
+    pendentes = list(cortes)
     with tempfile.TemporaryDirectory() as pasta:
-        caminho_video = os.path.join(pasta, "painel.mp4")
-        print(f"Baixando vídeo do Drive: {video['nome']}…")
-        baixar_drive(video["origem_drive_id"], caminho_video)
-        total = duracao(caminho_video)
-        print(f"Vídeo: {video['nome']} ({total / 60:.1f} min)")
-
-        atraso = 0.0
+        caminho_audio = None
         if base["tipo"] == "audio":
             caminho_audio = os.path.join(pasta, "mesa")
-            print("Baixando o áudio para sincronizar…")
+            print(f"Baixando o áudio para sincronizar: {base['nome']}…")
             baixar_drive(base["origem_drive_id"], caminho_audio)
-            atraso, confianca = atraso_video(caminho_audio, caminho_video)
-            print(f"Atraso calculado: {atraso:+.2f}s (confiança {confianca:.2f})")
-            if confianca < CONFIANCA_MINIMA:
-                falhar_todos(
-                    cortes,
-                    f"Não consegui sincronizar o áudio “{base['nome']}” com o vídeo “{video['nome']}”. "
-                    "Confira se são da mesma gravação.",
-                )
-                return
-
         frases = base["transcricao"].get("falas", [])
-        for corte in cortes:
-            try:
-                inicio = corte["inicio_ms"] / 1000
-                fim = corte["fim_ms"] / 1000
-                if inicio + atraso < 0 or fim + atraso > total:
-                    raise ValueError(f"O trecho ({inicio + atraso:.0f}s a {fim + atraso:.0f}s) fica fora do vídeo ({total:.0f}s).")
-                ass = os.path.join(pasta, f"{corte['id']}.ass")
-                saida = os.path.join(pasta, f"{corte['id']}.mp4")
-                legenda_ass(frases, inicio, fim, ass)
-                subprocess.run(
-                    [
-                        "ffmpeg", "-v", "error", "-y",
-                        "-ss", f"{max(0, inicio + atraso):.2f}", "-i", caminho_video, "-t", f"{fim - inicio:.2f}",
-                        "-vf", f"scale=-2:1920,crop=1080:1920,subtitles={ass}",
-                        "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-maxrate", "5M", "-bufsize", "10M",
-                        "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", saida,
-                    ],
-                    check=True,
-                )
-                if os.path.getsize(saida) < 200_000:
-                    raise ValueError("O corte saiu vazio.")
-                destino = f"{PAINEL}/auto-{corte['id']}.mp4"
-                with open(saida, "rb") as arq:
-                    supabase(
-                        "POST",
-                        f"/storage/v1/object/cortes/{destino}",
-                        arq.read(),
-                        {"Content-Type": "video/mp4", "x-upsert": "true", "cache-control": "31536000"},
-                        bruto=True,
-                    )
-                url = f"{SUPABASE_URL}/storage/v1/object/public/cortes/{destino}"
-                atualizar(
-                    "cortes",
-                    {"id": f"eq.{corte['id']}"},
-                    {"video_url": url, "video_web_url": None, "capa_url": None, "erro": None, "status": "rascunho"},
-                )
-                print(f"Corte pronto: {destino}")
-            except Exception as erro:  # noqa: BLE001 - registra e segue para o próximo corte
-                print(f"Falha no corte {corte['id']}: {erro}")
-                atualizar(
-                    "cortes",
-                    {"id": f"eq.{corte['id']}"},
-                    {"tentativas": corte["tentativas"] + 1, "erro": str(erro)[:500]},
-                )
+        for video in videos:
+            if not pendentes:
+                break
+            caminho_video = os.path.join(pasta, "painel.mp4")
+            print(f"Baixando vídeo do Drive: {video['nome']}…")
+            baixar_drive(video["origem_drive_id"], caminho_video)
+            total = duracao(caminho_video)
+            print(f"Vídeo: {video['nome']} ({total / 60:.1f} min)")
+            atraso = 0.0
+            if caminho_audio:
+                atraso, confianca = atraso_video(caminho_audio, caminho_video)
+                print(f"Atraso calculado: {atraso:+.2f}s (confiança {confianca:.2f})")
+                if confianca < CONFIANCA_MINIMA:
+                    print(f"“{video['nome']}” não parece ser da mesma gravação de “{base['nome']}”; tentando o próximo.")
+                    os.remove(caminho_video)
+                    continue
+            cabem = [c for c in pendentes if c["inicio_ms"] / 1000 + atraso >= 0 and c["fim_ms"] / 1000 + atraso <= total]
+            for corte in cabem:
+                pendentes.remove(corte)
+                cortar_trecho(corte, frases, caminho_video, atraso, pasta)
+            os.remove(caminho_video)
+        if pendentes:
+            nomes = ", ".join(v["nome"] or "?" for v in videos)
+            falhar_todos(
+                pendentes,
+                f"O trecho não está em nenhum vídeo que bate com o áudio “{base['nome']}” (vídeos: {nomes}). "
+                "Confira se o vídeo dessa parte foi enviado.",
+            )
+
+
+def cortar_trecho(corte, frases, caminho_video, atraso, pasta):
+    try:
+        inicio = corte["inicio_ms"] / 1000
+        fim = corte["fim_ms"] / 1000
+        ass = os.path.join(pasta, f"{corte['id']}.ass")
+        saida = os.path.join(pasta, f"{corte['id']}.mp4")
+        legenda_ass(frases, inicio, fim, ass)
+        subprocess.run(
+            [
+                "ffmpeg", "-v", "error", "-y",
+                "-ss", f"{max(0, inicio + atraso):.2f}", "-i", caminho_video, "-t", f"{fim - inicio:.2f}",
+                "-vf", f"scale=-2:1920,crop=1080:1920,subtitles={ass}",
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-maxrate", "5M", "-bufsize", "10M",
+                "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", saida,
+            ],
+            check=True,
+        )
+        if os.path.getsize(saida) < 200_000:
+            raise ValueError("O corte saiu vazio.")
+        destino = f"{PAINEL}/auto-{corte['id']}.mp4"
+        with open(saida, "rb") as arq:
+            supabase(
+                "POST",
+                f"/storage/v1/object/cortes/{destino}",
+                arq.read(),
+                {"Content-Type": "video/mp4", "x-upsert": "true", "cache-control": "31536000"},
+                bruto=True,
+            )
+        url = f"{SUPABASE_URL}/storage/v1/object/public/cortes/{destino}"
+        atualizar(
+            "cortes",
+            {"id": f"eq.{corte['id']}"},
+            {"video_url": url, "video_web_url": None, "capa_url": None, "erro": None, "status": "rascunho"},
+        )
+        print(f"Corte pronto: {destino}")
+    except Exception as erro:  # noqa: BLE001 - registra e segue para o próximo corte
+        print(f"Falha no corte {corte['id']}: {erro}")
+        atualizar(
+            "cortes",
+            {"id": f"eq.{corte['id']}"},
+            {"tentativas": corte["tentativas"] + 1, "erro": str(erro)[:500]},
+        )
 
 
 if __name__ == "__main__":

@@ -85,7 +85,13 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
   conteúdo [TESTE] do Painel 1, /exemplo, testes de carga; Cilene → editor; cadastrar aprovador; revisar firewall (Wi-Fi do evento = mesmo IP).
 - Ideias não feitas: glossário de nomes/siglas na AssemblyAI (não testado, risco de quebrar), gamificação (passaporte,
   frase do dia, selo LinkedIn), produto "Mzen hub" multi-evento depois do congresso.
-- Regras para a equipe: pasta geral do painel = UMA gravação (áudio e vídeo da mesma, mesmo nome); gravação de uma
+- (11/11) Gravação em PARTES: áudios com nomes diferentes na mesma pasta = partes da mesma gravação (o gravador divide a
+  cada 30 min: 18-39-07.wav, 19-09-07.wav…). Cada parte é transcrita; a última pelo nome junta tudo numa linha do tempo
+  e escreve uma vez (`partesDaGravacao`, `escreverTextos(envio, partes)`); falas/cortes guardam o envio_id da parte e o
+  tempo dentro dela. Mesmo nome reenviado = substitui. Áudio < 1 MB é ignorado. cortar.py tenta todos os vídeos da
+  fonte (câmera grava vários clipes) e cada corte sai do vídeo que contém o trecho; confiança = pico em desvios-padrão
+  (mínimo 8; mesma gravação ~30, outra ~4).
+- Regras para a equipe: pasta geral do painel = UMA gravação (pode vir em partes); gravação de uma
   pessoa vai em "Gravações por palestrante/<nome>"; fotos de uma pessoa em "Fotos por palestrante/<nome>" (vira card
   com foto). Kit só depois de aprovar. Arquivo novo na pasta geral substitui o painel (volta a rascunho).
 
