@@ -82,8 +82,9 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
   pessoa vai em "Gravações por palestrante/<nome>"; fotos de uma pessoa em "Fotos por palestrante/<nome>" (vira card
   com foto). Kit só depois de aprovar. Arquivo novo na pasta geral substitui o painel (volta a rascunho).
 
-## Páginas de demonstração
-`/exemplo` (público) e `/exemplo/palestrante` — conteúdo fictício. APAGAR antes do evento.
+## Limpeza antes do evento (11/11)
+Apagados: painel `ensaio` (registros e arquivos), fala "[TESTE]" do Painel 1 e as páginas `/exemplo`. O código que
+esconde o ensaio do público (`src/lib/ensaio.ts`) ficou, para um próximo teste. A pasta do ensaio no Drive continua lá.
 
 ## Próximos passos
 1. ✅ Supabase ligado (variáveis na Vercel), tabelas e regras de acesso criadas.
