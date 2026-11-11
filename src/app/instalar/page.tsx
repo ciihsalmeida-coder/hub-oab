@@ -80,7 +80,6 @@ export default async function InstalarPage() {
               className="mx-auto mt-4 w-full rounded-2xl bg-white p-3 [&_svg]:h-auto [&_svg]:w-full"
               dangerouslySetInnerHTML={{ __html: qr }}
             />
-            <p className="mt-4 text-sm font-semibold text-sky">{endereco.replace("https://", "")}</p>
             <div className="mt-4 flex h-1.5 overflow-hidden rounded-full">
               <span className="w-1/6 bg-wine" />
               <span className="flex-1 bg-sky" />
