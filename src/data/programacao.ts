@@ -125,7 +125,8 @@ const programacao: Painel[] = [
     horario: "10h00",
     palestrantes: [
       { nome: "Camila Brandão da Costa", cargo: "Advogada e Vice-Presidente da Comissão de Direito Aduaneiro, Marítimo e Portuário da OAB/BA" },
-      { nome: "Rafael Prado, PhD, LLD", cargo: "Nippon Foundation Lecturer em Governança Global dos Oceanos no IMO-IMLI" },
+      // 11/11: substitui Rafael Prado (baixa avisada pela OAB).
+      { nome: "Tiago Zanella", cargo: "Professor da Escola de Guerra Naval (EGN), Vice-Presidente do IBDMar e Consultor Jurídico da UNODC" },
       { nome: "Bernardo Mendes Vianna", cargo: "Advogado e Vice-Presidente da ABDM e do IIDM" },
       { nome: "Beatriz Frambach", cargo: "Advogada" },
       { nome: "Eliane Maria Octaviano Martins", cargo: "Jurista e Diretora da Maritime Law Academy (MLAW)" },

@@ -10,6 +10,11 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 - Fotos dos palestrantes em `public/palestrantes/<nome-sem-acento>.jpg`, extraídas do
   plano de cobertura (144px). O carômetro tem divergências a confirmar com a OAB.
 - Diogo Bianchi Fazolo: cargo incompleto, marcado como pendente.
+- (11/11) Painel 6: Rafael Prado saiu; Tiago Zanella entrou no mesmo registro (id 98a44c8c…, token de kit novo,
+  pastas do Drive renomeadas).
+- Público só assiste os cortes (sem baixar; `VideoContado soAssistir`, Compartilhar manda o link). Kit continua
+  baixando. Marcar @aduaneiro.oabsc @portuarioemaritimo.oabsc (`src/lib/marcacoes.ts`, `MarqueComissoes`; legendas
+  do kit recebem os @ ao exibir/copiar; prompt da IA pede os @).
 
 ## Prazos
 - 04/11 pipeline + páginas funcionando · 06/11 teste completo · 08/11 congelado

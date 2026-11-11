@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { Compartilhar, Salvar } from "@/components/Botoes";
+import { Compartilhar } from "@/components/Botoes";
+import { MarqueComissoes } from "@/components/MarqueComissoes";
 import { Cadastro } from "@/components/Cadastro";
 import { GaleriaBotao } from "@/components/GaleriaBotao";
 import { GaleriaFotos } from "@/components/GaleriaFotos";
@@ -92,6 +93,7 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
                 <figure key={c.id} className="w-64 shrink-0 snap-start overflow-hidden rounded-2xl bg-card shadow-sm">
                   {c.videoUrl && (
                     <VideoContado
+                      soAssistir
                       alvo={painel.slug}
                       src={c.videoWebUrl ?? undefined}
                       poster={c.capaUrl ?? undefined}
@@ -104,9 +106,9 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
                   <figcaption className="p-3">
                     <p className="leading-tight font-bold">{c.titulo}</p>
                     {c.palestranteId && <p className="text-sm text-muted">{nomePor.get(c.palestranteId)?.nome}</p>}
-                    <div className="mt-3 space-y-2">
-                      <Salvar url={c.videoUrl} titulo={c.titulo} tipo="video" evento="baixou_video" alvo={painel.slug} />
-                      <Compartilhar titulo={c.titulo} alvo={painel.slug} video={c.videoUrl} />
+                    {/* Público só assiste: compartilha o link da página, não o arquivo do vídeo. */}
+                    <div className="mt-3">
+                      <Compartilhar titulo={c.titulo} alvo={painel.slug} />
                     </div>
                   </figcaption>
                 </figure>
@@ -116,6 +118,8 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
             <EmBreve>Os melhores momentos em vídeo aparecem aqui no mesmo dia do painel.</EmBreve>
           )}
         </Secao>
+
+        <MarqueComissoes />
 
         {painel.falas.length > 0 && (
           <Secao titulo="Frases em destaque">

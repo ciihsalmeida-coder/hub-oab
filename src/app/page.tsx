@@ -3,6 +3,7 @@ import { AgoraNoPalco } from "@/components/AgoraNoPalco";
 import { Rastrear } from "@/components/Rastrear";
 import { GaleriaBotao } from "@/components/GaleriaBotao";
 import { ListaPaineis } from "@/components/ListaPaineis";
+import { MarqueComissoes } from "@/components/MarqueComissoes";
 import { Assinatura, FaixaLocal, MzenTopo, TituloCongresso } from "@/components/Marca";
 import { dias } from "@/data/programacao";
 import { listarPaineis } from "@/lib/dados";
@@ -40,6 +41,9 @@ export default async function Home() {
 
       <div className="mx-auto max-w-3xl px-4 pb-10">
         <ListaPaineis paineis={paineis} dias={dias} />
+        <div className="mt-10">
+          <MarqueComissoes />
+        </div>
       </div>
     </main>
   );

@@ -26,11 +26,19 @@ export function LinkContado({
 }
 
 // Vídeo que conta quando alguém aperta o play (uma vez por vídeo aberto).
-export function VideoContado({ alvo, ...props }: React.VideoHTMLAttributes<HTMLVideoElement> & { alvo?: string }) {
+// `soAssistir`: tira o botão de baixar do player e o menu do botão direito (página do público).
+export function VideoContado({
+  alvo,
+  soAssistir = false,
+  ...props
+}: React.VideoHTMLAttributes<HTMLVideoElement> & { alvo?: string; soAssistir?: boolean }) {
   const [contou, setContou] = useState(false);
   return (
     <video
       {...props}
+      {...(soAssistir
+        ? { controlsList: "nodownload", disablePictureInPicture: true, onContextMenu: (e: React.MouseEvent) => e.preventDefault() }
+        : {})}
       onPlay={() => {
         if (contou) return;
         setContou(true);

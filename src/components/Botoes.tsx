@@ -1,5 +1,6 @@
 "use client";
 
+import { MARCACOES } from "@/lib/marcacoes";
 import { useEffect, useState } from "react";
 import { registrar, type TipoEvento } from "@/lib/metricas";
 
@@ -214,7 +215,7 @@ export function Compartilhar({
   alvo?: string;
   video?: string | null;
 }) {
-  const texto = `${titulo} · XIV Congresso OAB`;
+  const texto = `${titulo} · XIV Congresso OAB ${MARCACOES}`;
   const { estado, usar } = useArquivoParaCelular(
     video,
     nomeDeArquivo(titulo, "mp4"),

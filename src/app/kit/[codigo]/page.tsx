@@ -5,6 +5,8 @@ import { GaleriaFotos } from "@/components/GaleriaFotos";
 import { Assinatura, FaixaLocal, MzenTopo, SeloMzen } from "@/components/Marca";
 import { Rastrear, VideoContado } from "@/components/Rastrear";
 import { buscarKit } from "@/lib/kit";
+import { comMarcacoes } from "@/lib/marcacoes";
+import { MarqueComissoes } from "@/components/MarqueComissoes";
 
 export const dynamic = "force-dynamic";
 
@@ -97,13 +99,15 @@ export default async function Kit({
             subtitulo="Copie, ajuste do seu jeito e cole no seu post."
           >
             <div className="rounded-2xl border border-line bg-card p-4">
-              <p className="leading-relaxed">{p.legenda_kit}</p>
+              <p className="leading-relaxed whitespace-pre-line">{comMarcacoes(p.legenda_kit)}</p>
               <div className="mt-3">
-                <Copiar texto={p.legenda_kit} rotulo="Copiar legenda" />
+                <Copiar texto={comMarcacoes(p.legenda_kit)} rotulo="Copiar legenda" />
               </div>
             </div>
           </Secao>
         )}
+
+        <MarqueComissoes texto="Ao postar seus cards, vídeos e fotos, marque as comissões organizadoras:" />
 
         {kit.falas.length > 0 && (
           <Secao titulo="Suas melhores falas">
