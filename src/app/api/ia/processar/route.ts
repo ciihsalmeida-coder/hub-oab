@@ -4,7 +4,7 @@ import { autorizado } from "@/lib/autorizacao";
 import { dispararCortes } from "@/lib/cortes";
 import { iaConfigurada, processarProximo } from "@/lib/ia";
 
-export const maxDuration = 300;
+export const maxDuration = 800; // Vercel Pro: painel de 1 h pode levar vários minutos no Claude
 export const dynamic = "force-dynamic";
 
 // Avança a fila da IA: transcrição e textos de cada painel. Chamado a cada 2 minutos.

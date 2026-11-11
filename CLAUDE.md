@@ -70,12 +70,12 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 - `pg_net` no schema public (aviso do Supabase): limitação conhecida da extensão, sem impacto.
 
 ## Pendências (05/11)
-- Cilene: assinar Supabase Pro + Vercel Pro (storage já em 366 MB/1 GB) e créditos de IA; conferir validade do
+- (11/11) Vercel Pro assinado: /api/ia/processar com maxDuration 800 e reserva do envio 14 min.
+- Cilene: assinar Supabase Pro (storage já em 366 MB/1 GB) e créditos de IA; conferir validade do
   GITHUB_TOKEN; espaço no Google Drive de quem sobe vídeos (vídeo conta no Drive de quem envia); nome/e-mail do
   aprovador OAB; WhatsApps; carômetro; OK jurídico; domínio; teste de gravação por palestrante (ainda não testado).
 - Eu, até 08/11: apagar painel `ensaio` (e pastas no Drive; a pasta do ensaio está "qualquer pessoa com link = editor"),
-  conteúdo [TESTE] do Painel 1, /exemplo, testes de carga; Cilene → editor; cadastrar aprovador; com Vercel Pro subir
-  maxDuration de /api/ia/processar para 800 e revisar firewall (Wi-Fi do evento = mesmo IP).
+  conteúdo [TESTE] do Painel 1, /exemplo, testes de carga; Cilene → editor; cadastrar aprovador; revisar firewall (Wi-Fi do evento = mesmo IP).
 - Ideias não feitas: glossário de nomes/siglas na AssemblyAI (não testado, risco de quebrar), gamificação (passaporte,
   frase do dia, selo LinkedIn), produto "Mzen hub" multi-evento depois do congresso.
 - Regras para a equipe: pasta geral do painel = UMA gravação (áudio e vídeo da mesma, mesmo nome); gravação de uma

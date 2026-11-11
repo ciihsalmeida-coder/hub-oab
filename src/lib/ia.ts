@@ -87,7 +87,8 @@ async function reservarEnvio(): Promise<Envio | null> {
   for (const c of prontos.slice(0, 5)) {
     const { data } = await db
       .from("envios")
-      .update({ bloqueado_ate: new Date(Date.now() + 5 * 60_000).toISOString() })
+      // Reserva maior que o tempo máximo da rota (800 s) para outra rodada não pegar a mesma gravação.
+      .update({ bloqueado_ate: new Date(Date.now() + 14 * 60_000).toISOString() })
       .eq("id", c.id)
       .or(`bloqueado_ate.is.null,bloqueado_ate.lt.${agora}`)
       .select(COLUNAS_ENVIO)
