@@ -86,7 +86,7 @@ def atraso_video(audio, video):
 
     Procura em qualquer posição: o vídeo pode ser um trecho curto (a câmera grava em vários arquivos)
     dentro de uma parte longa do áudio, ou começar antes dele. Só vale se pelo menos metade do mais
-    curto dos dois (e no mínimo 1 minuto) se sobrepõe.
+    curto dos dois (e no mínimo 20 segundos) se sobrepõe.
     """
     a = energia(audio, 70 * 60)
     v = energia(video, 70 * 60)
@@ -95,7 +95,7 @@ def atraso_video(audio, video):
     deslocamentos = np.arange(-(len(a) - 1), len(v))
     valores = corr[deslocamentos % tamanho]
     sobreposicao = np.minimum(len(a), len(v) - deslocamentos) - np.maximum(0, -deslocamentos)
-    minimo = max(60 * TAXA, min(len(a), len(v)) // 2)
+    minimo = max(20 * TAXA, min(len(a), len(v)) // 2)
     validos = sobreposicao >= minimo
     if not validos.any():
         return 0.0, 0.0
