@@ -71,7 +71,9 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 
 ## Pendências (05/11)
 - (11/11) Vercel Pro assinado: /api/ia/processar com maxDuration 800 e reserva do envio 14 min.
-- Cilene: assinar Supabase Pro (storage já em 366 MB/1 GB) e créditos de IA; conferir validade do
+- (11/11) Supabase Pro assinado (org Mzen Films): vídeo manual até 200 MB (LIMITE_VIDEO_MB); falta o limite geral
+  em Storage > Settings (Cilene) e ligar proteção de senhas vazadas.
+- Cilene: (storage já em 366 MB/1 GB) e créditos de IA; conferir validade do
   GITHUB_TOKEN; espaço no Google Drive de quem sobe vídeos (vídeo conta no Drive de quem envia); nome/e-mail do
   aprovador OAB; WhatsApps; carômetro; OK jurídico; domínio; teste de gravação por palestrante (ainda não testado).
 - Eu, até 08/11: apagar painel `ensaio` (e pastas no Drive; a pasta do ensaio está "qualquer pessoa com link = editor"),

@@ -76,8 +76,9 @@ export function Instalar() {
           titulo="No iPhone (Safari)"
           passos={[
             <>Abra este link no <strong>Safari</strong>, o navegador com ícone de bússola 🧭.</>,
-            <>Toque no botão <strong>Compartilhar</strong>, o quadrado com uma seta para cima ⬆️, na barra de baixo.</>,
-            <>Role a lista e toque em <strong>Adicionar à Tela de Início</strong> ➕.</>,
+            <>Toque nos <strong>três pontinhos ⋯</strong>, no canto de baixo, à direita. (Se a barra de baixo já mostrar o botão Compartilhar ⬆️, toque direto nele.)</>,
+            <>No menu que abre, toque em <strong>Compartilhar</strong>, o quadrado com uma seta para cima ⬆️.</>,
+            <>Role a lista e toque em <strong>Adicionar à Tela de Início</strong> ➕. Se não aparecer, toque antes em <strong>Ver mais</strong>.</>,
             <>Toque em <strong>Adicionar</strong>, no canto de cima.</>,
             <>Pronto! O ícone <strong>Congresso OAB</strong> aparece na sua tela inicial.</>,
           ]}

@@ -11,7 +11,7 @@ export const PASTA_RAIZ = "1lGLnqcFRI6xfguGP7KVLdqBiFCeG3fCr";
 // Vale para pastas comuns e para Drives compartilhados.
 const TODOS_OS_DRIVES = { supportsAllDrives: true, includeItemsFromAllDrives: true } as const;
 const PASTA = "application/vnd.google-apps.folder";
-const LIMITE_VIDEO_MB = 45; // limite por arquivo no plano gratuito do Supabase (50 MB)
+const LIMITE_VIDEO_MB = 200; // Supabase Pro (o limite geral do projeto fica em Storage > Settings)
 
 export function driveConfigurado() {
   return Boolean(process.env.GOOGLE_SERVICE_ACCOUNT_JSON && process.env.SUPABASE_SECRET_KEY);
