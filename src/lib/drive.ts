@@ -11,7 +11,7 @@ export const PASTA_RAIZ = "1lGLnqcFRI6xfguGP7KVLdqBiFCeG3fCr";
 // Vale para pastas comuns e para Drives compartilhados.
 const TODOS_OS_DRIVES = { supportsAllDrives: true, includeItemsFromAllDrives: true } as const;
 const PASTA = "application/vnd.google-apps.folder";
-const LIMITE_VIDEO_MB = 200; // Supabase Pro (o limite geral do projeto fica em Storage > Settings)
+const LIMITE_VIDEO_MB = 200; // acima disso o robô de cortes reduz para 1080p antes de publicar
 
 export function driveConfigurado() {
   return Boolean(process.env.GOOGLE_SERVICE_ACCOUNT_JSON && process.env.SUPABASE_SECRET_KEY);
@@ -202,8 +202,21 @@ async function copiarFoto(api: drive_v3.Drive, arquivo: drive_v3.Schema$File, pa
 async function copiarVideo(api: drive_v3.Drive, arquivo: drive_v3.Schema$File, pasta: Pasta) {
   if (pasta.tipo !== "cortes") throw new Error("Vídeos vão na pasta “Cortes de vídeo”.");
   const mb = Number(arquivo.size ?? 0) / 1024 / 1024;
-  if (mb > LIMITE_VIDEO_MB) throw new Error(`Vídeo com ${mb.toFixed(0)} MB; o limite é ${LIMITE_VIDEO_MB} MB. Exporte em 1080p e tente de novo.`);
   const db = supabaseAdmin();
+  const titulo = (arquivo.name ?? "Corte").replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+  if (mb > LIMITE_VIDEO_MB) {
+    // Vídeo grande (ex.: 4K direto da câmera): entra sem arquivo; o robô de cortes baixa do Drive,
+    // reduz para 1080p e preenche o vídeo. A equipe não precisa exportar antes de subir.
+    const r = await db.from("cortes").insert({
+      painel_slug: pasta.painel_slug,
+      titulo,
+      origem: "manual",
+      origem_drive_id: arquivo.id,
+      ordem: Math.floor(Date.now() / 1000),
+    });
+    if (r.error) throw r.error;
+    return;
+  }
   const conteudo = await baixar(api, arquivo.id!);
   const extensao = (arquivo.name?.split(".").pop() ?? "mp4").toLowerCase();
   const caminho = `${pasta.painel_slug}/drive-${arquivo.id}.${extensao}`;
@@ -211,7 +224,6 @@ async function copiarVideo(api: drive_v3.Drive, arquivo: drive_v3.Schema$File, p
     .from("cortes")
     .upload(caminho, conteudo, { contentType: arquivo.mimeType ?? "video/mp4", cacheControl: "31536000", upsert: true });
   if (r1.error) throw r1.error;
-  const titulo = (arquivo.name ?? "Corte").replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
   const r2 = await db.from("cortes").insert({
     painel_slug: pasta.painel_slug,
     titulo,

@@ -217,7 +217,63 @@ def otimizar():
                 atualizar("cortes", {"id": f"eq.{corte['id']}"}, {"video_web_url": corte["video_url"]})
 
 
+def reduzir_grandes():
+    """Vídeos grandes da pasta "Cortes de vídeo" (ex.: 4K direto da câmera): baixa do Drive, reduz para
+    1080p e publica como o vídeo original do corte. Depois o otimizar() faz a versão leve e a capa."""
+    cortes = consulta(
+        "cortes",
+        {
+            "painel_slug": f"eq.{PAINEL}",
+            "origem": "eq.manual",
+            "video_url": "is.null",
+            "origem_drive_id": "not.is.null",
+            "tentativas": f"lt.{MAX_TENTATIVAS}",
+            "select": "id,origem_drive_id,tentativas,titulo",
+        },
+    )
+    for corte in cortes:
+        with tempfile.TemporaryDirectory() as pasta:
+            try:
+                original = os.path.join(pasta, "original")
+                saida = os.path.join(pasta, "1080.mp4")
+                print(f"Baixando vídeo grande do Drive: {corte['titulo']}…")
+                baixar_drive(corte["origem_drive_id"], original)
+                # Lado maior em até 1920 (serve para vertical e horizontal), sem aumentar vídeo pequeno.
+                escala = (
+                    "scale='if(gte(iw,ih),min(1920,iw),-2)':'if(gte(iw,ih),-2,min(1920,ih))',"
+                    "scale=trunc(iw/2)*2:trunc(ih/2)*2"
+                )
+                subprocess.run(
+                    [
+                        "ffmpeg", "-v", "error", "-y", "-i", original, "-vf", escala,
+                        "-c:v", "libx264", "-preset", "veryfast", "-crf", "22", "-maxrate", "8M", "-bufsize", "16M",
+                        "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", saida,
+                    ],
+                    check=True,
+                )
+                destino = f"{PAINEL}/drive-{corte['origem_drive_id']}.mp4"
+                with open(saida, "rb") as arq:
+                    supabase(
+                        "POST",
+                        f"/storage/v1/object/cortes/{destino}",
+                        arq.read(),
+                        {"Content-Type": "video/mp4", "x-upsert": "true", "cache-control": "31536000"},
+                        bruto=True,
+                    )
+                url = f"{SUPABASE_URL}/storage/v1/object/public/cortes/{destino}"
+                atualizar("cortes", {"id": f"eq.{corte['id']}"}, {"video_url": url, "video_web_url": None, "erro": None})
+                print(f"Vídeo reduzido: {destino} ({os.path.getsize(saida) / 1024 / 1024:.0f} MB)")
+            except Exception as erro:  # noqa: BLE001 - registra e segue para o próximo
+                print(f"Falha ao reduzir {corte['titulo']}: {erro}")
+                atualizar(
+                    "cortes",
+                    {"id": f"eq.{corte['id']}"},
+                    {"tentativas": corte["tentativas"] + 1, "erro": str(erro)[:500]},
+                )
+
+
 def main():
+    reduzir_grandes()
     cortar()
     otimizar()
 

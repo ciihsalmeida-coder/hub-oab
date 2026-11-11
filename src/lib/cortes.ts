@@ -8,17 +8,20 @@ const INTERVALO_MS = 8 * 60_000; // espera entre disparos do mesmo painel (grava
 export async function dispararCortes() {
   if (!process.env.GITHUB_TOKEN) return [];
   const db = supabaseAdmin();
-  const [{ data: pendentes }, { data: semVersaoLeve }, { data: videos }, { data: paineis }] = await Promise.all([
+  const [{ data: pendentes }, { data: semVersaoLeve }, { data: videos }, { data: paineis }, { data: grandes }] = await Promise.all([
     db.from("cortes").select("painel_slug").eq("origem", "auto").is("video_url", null).lt("tentativas", 3),
     db.from("cortes").select("painel_slug").not("video_url", "is", null).is("video_web_url", null),
     db.from("envios").select("painel_slug").eq("tipo", "video"),
     db.from("paineis").select("slug, cortes_disparado_em"),
+    // Vídeos grandes da pasta "Cortes de vídeo", esperando o robô reduzir para 1080p.
+    db.from("cortes").select("painel_slug").eq("origem", "manual").is("video_url", null).lt("tentativas", 3),
   ]);
   const comVideo = new Set((videos ?? []).map((v) => v.painel_slug));
   const agora = Date.now();
   const precisam = new Set([
     ...(pendentes ?? []).map((c) => c.painel_slug).filter((slug) => comVideo.has(slug)),
     ...(semVersaoLeve ?? []).map((c) => c.painel_slug),
+    ...(grandes ?? []).map((c) => c.painel_slug),
   ]);
   const alvos = [...precisam].filter((slug) => {
     const ultimo = paineis?.find((p) => p.slug === slug)?.cortes_disparado_em;

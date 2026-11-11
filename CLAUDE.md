@@ -63,7 +63,9 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
   hub-oab-drive@buoyant-climate-513113-q0.iam.gserviceaccount.com (projeto "My First Project").
 - Chave do robô na Vercel: GOOGLE_SERVICE_ACCOUNT_JSON (Secret).
 - pg_cron "sincronizar-drive" chama /api/drive/sincronizar a cada 2 min (token em public.segredos).
-- Vídeos acima de 45 MB falham no plano gratuito do Supabase (limite 50 MB/arquivo).
+- (11/11) Supabase Pro + limite geral de upload 500 MB (Cilene). Vídeo da pasta "Cortes de vídeo" acima de 200 MB entra
+  sem arquivo e o robô (`reduzir_grandes` em cortar.py) baixa do Drive, reduz para 1080p e publica; `dispararCortes`
+  também acorda para esses.
 
 ## Riscos conhecidos (revisão 29/10)
 - Vercel Hobby: funções com limite de tempo menor; `/api/ia/processar` pede 300 s (Claude em painel
