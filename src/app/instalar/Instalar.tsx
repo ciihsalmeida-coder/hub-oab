@@ -16,6 +16,7 @@ export function Instalar() {
   const [aparelho, setAparelho] = useState<Aparelho | null>(null);
   const [instalado, setInstalado] = useState(false);
   const [prompt, setPrompt] = useState<PromptEvent | null>(null);
+  const [escolha, setEscolha] = useState<"iphone" | "android" | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- só dá para ler o aparelho no navegador
@@ -38,8 +39,10 @@ export function Instalar() {
     );
   }
 
+  const aba = escolha ?? (aparelho === "android" ? "android" : "iphone");
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {prompt && (
         <button
           onClick={async () => {
@@ -52,20 +55,34 @@ export function Instalar() {
         </button>
       )}
 
-      {(aparelho === "iphone" || aparelho === "outro") && (
+      <div className="grid grid-cols-2 gap-1 rounded-2xl bg-navy/10 p-1" role="tablist">
+        {(["iphone", "android"] as const).map((a) => (
+          <button
+            key={a}
+            role="tab"
+            aria-selected={aba === a}
+            onClick={() => setEscolha(a)}
+            className={`rounded-xl py-2.5 text-sm font-extrabold transition ${
+              aba === a ? "bg-navy text-white shadow" : "text-navy/70"
+            }`}
+          >
+            {a === "iphone" ? "📱 iPhone" : "🤖 Android"}
+          </button>
+        ))}
+      </div>
+
+      {aba === "iphone" ? (
         <Passos
           titulo="No iPhone (Safari)"
           passos={[
-            <>Abra este link no <strong>Safari</strong>, o navegador com ícone de bússola.</>,
+            <>Abra este link no <strong>Safari</strong>, o navegador com ícone de bússola 🧭.</>,
             <>Toque no botão <strong>Compartilhar</strong>, o quadrado com uma seta para cima ⬆️, na barra de baixo.</>,
             <>Role a lista e toque em <strong>Adicionar à Tela de Início</strong> ➕.</>,
             <>Toque em <strong>Adicionar</strong>, no canto de cima.</>,
             <>Pronto! O ícone <strong>Congresso OAB</strong> aparece na sua tela inicial.</>,
           ]}
         />
-      )}
-
-      {(aparelho === "android" || aparelho === "outro") && (
+      ) : (
         <Passos
           titulo="No Android (Chrome)"
           passos={[
@@ -73,7 +90,7 @@ export function Instalar() {
             <>Se aparecer o botão azul <strong>Instalar agora</strong> acima, toque nele e confirme.</>,
             <>Se não aparecer, toque nos <strong>três pontinhos ⋮</strong>, no canto de cima.</>,
             <>Toque em <strong>Adicionar à tela inicial</strong> ou <strong>Instalar app</strong>.</>,
-            <>Confirme em <strong>Instalar</strong>. O ícone aparece na sua tela inicial.</>,
+            <>Confirme em <strong>Instalar</strong>. O ícone <strong>Congresso OAB</strong> aparece na sua tela inicial.</>,
           ]}
         />
       )}
@@ -88,7 +105,7 @@ function Caixa({ children }: { children: React.ReactNode }) {
 function Passos({ titulo, passos }: { titulo: string; passos: React.ReactNode[] }) {
   return (
     <section className="rounded-2xl border border-line bg-card p-5">
-      <h2 className="text-sm font-extrabold tracking-[0.15em] text-navy uppercase">{titulo}</h2>
+      <h3 className="text-xs font-extrabold tracking-[0.15em] text-muted uppercase">{titulo}</h3>
       <ol className="mt-4 space-y-4">
         {passos.map((p, i) => (
           <li key={i} className="flex gap-3">
