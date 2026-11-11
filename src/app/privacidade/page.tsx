@@ -8,7 +8,7 @@ const CONTATO_PRIVACIDADE = "o canal de privacidade da OAB/SC (contato a confirm
 export default function Privacidade() {
   return (
     <main>
-      <header className="ceu-mar px-4 pt-6 pb-10">
+      <header className="ceu-mar px-4 pt-6 pb-36 md:pb-10">
         <div className="mx-auto max-w-2xl">
           <Voltar />
           <div className="mt-5">
