@@ -4,9 +4,13 @@ import { useEffect, useRef, useState } from "react";
 
 // Editor de enquadramento: mostra a foto dentro do card (moldura, sombra, lugar da frase e faixa do congresso)
 // e a equipe arrasta a foto até ficar bom. Guarda a posição como em CSS (0 = encostada à esquerda/topo,
-// 1 = à direita/embaixo); a rota do card recorta igual. Feed 4:5; o Story usa a mesma posição.
-const FOTO = { largura: 1030, altura: 1170 }; // área da foto no card Feed (ver FOTO_CARD em lib/card.tsx)
-const CARD = { largura: 1080, altura: 1350 };
+// 1 = à direita/embaixo); a rota do card recorta igual. Feed e Story usam a mesma posição (dá para ver os dois).
+// Medidas do card de verdade (ver FOTO_CARD e FAIXA em lib/card.tsx).
+const FORMATOS = {
+  feed: { card: 1350, foto: 1170, faixa: 155 },
+  story: { card: 1920, foto: 1565, faixa: 330 },
+} as const;
+const LARGURA = 1080;
 
 export function EnquadrarCard(props: {
   url: string;
@@ -18,6 +22,8 @@ export function EnquadrarCard(props: {
   const caixa = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState(props.inicial ?? { x: 0.5, y: 0.5 });
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
+  const [formato, setFormato] = useState<keyof typeof FORMATOS>("feed");
+  const F = FORMATOS[formato];
   const arraste = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
 
   useEffect(() => {
@@ -41,19 +47,35 @@ export function EnquadrarCard(props: {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal="true">
       <div className="w-full max-w-sm space-y-3">
         <p className="text-center text-sm font-semibold text-white">👆 Arraste a foto até a pessoa ficar bem no card</p>
-        {/* Card em miniatura, nas proporções reais (1080x1350) */}
+        <div className="mx-auto grid w-48 grid-cols-2 gap-1 rounded-full bg-white/10 p-1 text-xs font-bold">
+          {(["feed", "story"] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFormato(f)}
+              className={`rounded-full py-1.5 ${formato === f ? "bg-white text-navy" : "text-white"}`}
+            >
+              {f === "feed" ? "Feed" : "Story"}
+            </button>
+          ))}
+        </div>
+        {/* Card em miniatura, nas proporções reais (1080x1350 no Feed, 1080x1920 no Story) */}
         <div
-          className="relative w-full overflow-hidden rounded-lg"
-          style={{ aspectRatio: `${CARD.largura} / ${CARD.altura}`, background: "#0b1866" }}
+          className="relative mx-auto overflow-hidden rounded-lg"
+          style={{
+            aspectRatio: `${LARGURA} / ${F.card}`,
+            background: "#0b1866",
+            width: formato === "story" ? "min(100%, 52vh)" : "100%",
+          }}
         >
           <div
             ref={caixa}
             className="absolute cursor-grab touch-none active:cursor-grabbing"
             style={{
-              left: `${(25 / CARD.largura) * 100}%`,
-              right: `${(25 / CARD.largura) * 100}%`,
-              top: `${(25 / CARD.altura) * 100}%`,
-              height: `${(FOTO.altura / CARD.altura) * 100}%`,
+              left: `${(25 / LARGURA) * 100}%`,
+              right: `${(25 / LARGURA) * 100}%`,
+              top: `${(25 / F.card) * 100}%`,
+              height: `${(F.foto / F.card) * 100}%`,
               backgroundImage: `url(${props.url})`,
               backgroundSize: "cover",
               backgroundPosition: `${pos.x * 100}% ${pos.y * 100}%`,
@@ -95,7 +117,7 @@ export function EnquadrarCard(props: {
           </div>
           <div
             className="absolute right-0 bottom-0 left-0 flex items-center justify-center px-3 text-center text-[9px] font-semibold text-[#0b1866]"
-            style={{ height: `${(155 / CARD.altura) * 100}%`, background: "#eef0f3" }}
+            style={{ height: `${(F.faixa / F.card) * 100}%`, background: "#eef0f3" }}
           >
             XIV CONGRESSO NACIONAL DE DIREITO MARÍTIMO, PORTUÁRIO E ADUANEIRO
           </div>

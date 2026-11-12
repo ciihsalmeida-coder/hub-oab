@@ -20,6 +20,13 @@ export default async function Kit({
   const kit = await buscarKit(codigo);
   if (!kit) notFound();
   const { palestrante: p, painel } = kit;
+  // Muda quando a equipe reenquadra ou troca as fotos: o celular busca o card novo em vez do guardado.
+  const versao = kit.fotos
+    .map((f) => `${f.id}${f.foco_x ?? ""}${f.foco_y ?? ""}`)
+    .join("")
+    .split("")
+    .reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7)
+    .toString(36);
   const primeiroNome = p.nome.split(" ")[0];
   const vazio = !kit.falas.length && !kit.fotos.length && !kit.cortes.length; // os cards sem frase aparecem sempre
 
@@ -62,13 +69,13 @@ export default async function Kit({
             cards={[
               ...kit.falas.map((f, i) => ({
                 chave: f.id,
-                src: `/kit/${codigo}/card?fala=${f.id}`,
+                src: `/kit/${codigo}/card?fala=${f.id}&v=${versao}`,
                 alt: `Card com a frase: ${f.texto}`,
                 rotulo: `frase-${i + 1}`,
               })),
               {
                 chave: "participacao",
-                src: `/kit/${codigo}/card?modelo=participacao`,
+                src: `/kit/${codigo}/card?modelo=participacao&v=${versao}`,
                 alt: "Card de palestrante do painel, sem frase",
                 rotulo: "palestrante",
               },
