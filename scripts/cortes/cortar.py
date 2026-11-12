@@ -9,6 +9,7 @@ Roda no GitHub Actions (ver .github/workflows/cortes.yml), um painel por vez:
    para o site tocar sem travar no celular. A original fica para download.
 """
 
+import base64
 import json
 import os
 import subprocess
@@ -23,6 +24,7 @@ from google.oauth2 import service_account
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.environ["SUPABASE_SECRET_KEY"]
+SITE_URL = os.environ.get("SITE_URL", "https://hub-oab.vercel.app")
 PAINEL = sys.argv[1]
 TAXA = 100  # quadros de energia por segundo para o alinhamento
 MAX_TENTATIVAS = 3
@@ -316,7 +318,7 @@ def cortar():
             "origem": "eq.auto",
             "video_url": "is.null",
             "tentativas": f"lt.{MAX_TENTATIVAS}",
-            "select": "id,inicio_ms,fim_ms,tentativas,envio_id",
+            "select": "id,inicio_ms,fim_ms,tentativas,envio_id,foco_x,palestrante_id",
             "order": "ordem",
         },
     )
@@ -333,6 +335,9 @@ def cortar():
             "order": "criado_em.desc",
         },
     )
+    nomes = {p["id"]: p["nome"] for p in consulta("palestrantes", {"painel_slug": f"eq.{PAINEL}", "select": "id,nome"})}
+    for corte in cortes:
+        corte["nome"] = nomes.get(corte.get("palestrante_id"))
     for lista, base, videos in escolher_fontes(cortes, envios):
         if not base or not videos:
             print(f"Falta o vídeo ou a transcrição de {len(lista)} corte(s); ficam esperando.")
@@ -369,7 +374,7 @@ def cortar_grupo(cortes, base, videos):
             cabem = [c for c in pendentes if c["inicio_ms"] / 1000 + atraso >= 0 and c["fim_ms"] / 1000 + atraso <= total]
             for corte in cabem:
                 pendentes.remove(corte)
-                cortar_trecho(corte, frases, caminho_video, atraso, pasta)
+                cortar_trecho(corte, frases, caminho_video, atraso, pasta, largura_vertical(caminho_video))
             os.remove(caminho_video)
         if pendentes:
             nomes = ", ".join(v["nome"] or "?" for v in videos)
@@ -380,10 +385,76 @@ def cortar_grupo(cortes, base, videos):
             )
 
 
-def cortar_trecho(corte, frases, caminho_video, atraso, pasta):
+def largura_vertical(caminho):
+    """Largura do vídeo depois de escalado para 1920 de altura (o corte 9:16 pega 1080 dela)."""
+    saida = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height:stream_side_data=rotation",
+         "-of", "json", caminho],
+        capture_output=True, check=True, text=True,
+    ).stdout
+    v = json.loads(saida)["streams"][0]
+    w, h = v["width"], v["height"]
+    if any(abs(d.get("rotation", 0)) == 90 for d in v.get("side_data_list", [])):
+        w, h = h, w
+    return w * 1920 / h
+
+
+_token = None
+
+
+def token_site():
+    global _token
+    if _token is None:
+        linhas = consulta("segredos", {"chave": "eq.sync_token", "select": "valor"})
+        _token = linhas[0]["valor"] if linhas else ""
+    return _token
+
+
+def quadro(caminho_video, segundo, destino, largura):
+    subprocess.run(
+        ["ffmpeg", "-v", "error", "-y", "-ss", f"{max(0, segundo):.2f}", "-i", caminho_video, "-frames:v", "1",
+         "-vf", f"scale={largura}:-2", "-q:v", "4", destino],
+        check=True,
+    )
+
+
+def onde_esta_quem_fala(corte, caminho_video, ini, fim, pasta):
+    """Pergunta à IA (pelo site) onde está o rosto de quem fala, de 0 a 1. None se não souber."""
+    imagens = []
+    for i, fracao in enumerate((0.25, 0.5, 0.75)):
+        arq = os.path.join(pasta, f"ia-{i}.jpg")
+        quadro(caminho_video, ini + (fim - ini) * fracao, arq, 1024)
+        with open(arq, "rb") as f:
+            imagens.append(base64.b64encode(f.read()).decode())
+    req = urllib.request.Request(
+        f"{SITE_URL}/api/ia/enquadrar",
+        data=json.dumps({"imagens": imagens, "palestrante": corte.get("nome")}).encode(),
+        headers={"Content-Type": "application/json", "x-sync-token": token_site()},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=150) as r:
+            resposta = json.loads(r.read())
+        print(f"IA: quem fala está em {resposta.get('centro_x')} (achou: {resposta.get('achou')})")
+        return resposta["centro_x"] if resposta.get("achou") else None
+    except Exception as erro:  # noqa: BLE001 - sem a IA, corta no meio
+        print(f"Não consegui perguntar à IA onde está quem fala: {erro}")
+        return None
+
+
+def cortar_trecho(corte, frases, caminho_video, atraso, pasta, largura):
     try:
         inicio = corte["inicio_ms"] / 1000
         fim = corte["fim_ms"] / 1000
+        # Imagem do plano aberto (para o ajuste manual no /admin) e posição do quadro vertical.
+        imagem = os.path.join(pasta, f"{corte['id']}-quadro.jpg")
+        quadro(caminho_video, inicio + atraso + (fim - inicio) / 2, imagem, 960)
+        foco = corte.get("foco_x")
+        if foco is None and largura > 1080:
+            centro = onde_esta_quem_fala(corte, caminho_video, inicio + atraso, fim + atraso, pasta)
+            # De "onde está o rosto" para a posição do quadro (0 = encostado à esquerda, 1 = à direita).
+            foco = 0.5 if centro is None else min(1.0, max(0.0, (centro * largura - 540) / (largura - 1080)))
+        foco = 0.5 if foco is None else foco
         ass = os.path.join(pasta, f"{corte['id']}.ass")
         saida = os.path.join(pasta, f"{corte['id']}.mp4")
         legenda_ass(frases, inicio, fim, ass)
@@ -391,7 +462,7 @@ def cortar_trecho(corte, frases, caminho_video, atraso, pasta):
             [
                 "ffmpeg", "-v", "error", "-y",
                 "-ss", f"{max(0, inicio + atraso):.2f}", "-i", caminho_video, "-t", f"{fim - inicio:.2f}",
-                "-vf", f"scale=-2:1920,crop=1080:1920,subtitles={ass}",
+                "-vf", f"scale=-2:1920,crop=1080:1920:(iw-1080)*{foco:.4f}:0,subtitles={ass}",
                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-maxrate", "5M", "-bufsize", "10M",
                 *COMPATIVEL, "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", saida,
             ],
@@ -409,12 +480,24 @@ def cortar_trecho(corte, frases, caminho_video, atraso, pasta):
                 bruto=True,
             )
         url = f"{SUPABASE_URL}/storage/v1/object/public/cortes/{destino}"
+        destino_quadro = f"{PAINEL}/{corte['id']}-quadro.jpg"
+        with open(imagem, "rb") as arq:
+            supabase(
+                "POST",
+                f"/storage/v1/object/cortes/{destino_quadro}",
+                arq.read(),
+                {"Content-Type": "image/jpeg", "x-upsert": "true", "cache-control": "60"},
+                bruto=True,
+            )
         atualizar(
             "cortes",
             {"id": f"eq.{corte['id']}"},
-            {"video_url": url, "video_web_url": None, "capa_url": None, "erro": None, "status": "rascunho"},
+            {
+                "video_url": url, "video_web_url": None, "capa_url": None, "erro": None, "status": "rascunho",
+                "foco_x": foco, "quadro_url": f"{SUPABASE_URL}/storage/v1/object/public/cortes/{destino_quadro}?v={int(os.path.getmtime(imagem))}",
+            },
         )
-        print(f"Corte pronto: {destino}")
+        print(f"Corte pronto: {destino} (quadro em {foco:.2f})")
     except Exception as erro:  # noqa: BLE001 - registra e segue para o próximo corte
         print(f"Falha no corte {corte['id']}: {erro}")
         atualizar(

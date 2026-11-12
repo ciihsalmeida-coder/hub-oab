@@ -102,6 +102,9 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
   A rota do card recorta igual (left = x·(w − largura)). Sem foco: sharp "attention" (às vezes pega o telão).
 - (12/11) Admin: "✏️ Trocar título" e "🗑 Tirar vídeo" em cada corte. Removido vira drive_erros com tentativas 99
   (a sincronização pula; a lista de problemas do Drive ignora). Gravado com supabaseAdmin (RLS barrava a equipe).
+- (12/11) Enquadrar quem fala nos cortes: o robô tira 3 quadros do trecho e pergunta à IA (`/api/ia/enquadrar`, com o
+  sync token de public.segredos) onde está o rosto de quem fala; cortes.foco_x (0–1, x = (iw−1080)·foco) e quadro_url
+  (plano aberto). No /admin, "🎯 Enquadrar quem fala" (`EnquadrarCorte`) arrasta a janela 9:16 e manda cortar de novo.
 - Vídeos do robô: COMPATIVEL em cortar.py (estéreo, até 30 fps, H.264 High 4.1) — a Sony A7IV grava 4 canais/60p e o
   iPhone não tocava.
 

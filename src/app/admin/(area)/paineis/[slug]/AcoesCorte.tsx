@@ -2,15 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { removerCorte, renomearCorte } from "../../acoes";
+import { enquadrarCorte, removerCorte, renomearCorte } from "../../acoes";
+import { EnquadrarCorte } from "./EnquadrarCorte";
 
 // Trocar o título e tirar o vídeo do painel (reprovar).
-export function AcoesCorte(props: { slug: string; corteId: string; titulo: string }) {
+export function AcoesCorte(props: { slug: string; corteId: string; titulo: string; quadro?: string | null; foco?: number | null }) {
   const router = useRouter();
   const [pendente, iniciar] = useTransition();
   const [editando, setEditando] = useState(false);
   const [titulo, setTitulo] = useState(props.titulo);
   const [confirmando, setConfirmando] = useState(false);
+  const [enquadrando, setEnquadrando] = useState(false);
 
   if (editando)
     return (
@@ -57,6 +59,26 @@ export function AcoesCorte(props: { slug: string; corteId: string; titulo: strin
 
   return (
     <div className="flex flex-wrap gap-2 text-xs font-bold">
+      {props.quadro && (
+        <button onClick={() => setEnquadrando(true)} className="rounded-full bg-sky/20 px-3 py-1.5 text-sky">
+          🎯 Enquadrar quem fala
+        </button>
+      )}
+      {enquadrando && props.quadro && (
+        <EnquadrarCorte
+          imagem={props.quadro}
+          inicial={props.foco ?? null}
+          salvando={pendente}
+          aoFechar={() => setEnquadrando(false)}
+          aoSalvar={(x) =>
+            iniciar(async () => {
+              await enquadrarCorte(props.slug, props.corteId, x);
+              setEnquadrando(false);
+              router.refresh();
+            })
+          }
+        />
+      )}
       <button onClick={() => setEditando(true)} className="rounded-full bg-white/10 px-3 py-1.5">
         ✏️ Trocar título
       </button>

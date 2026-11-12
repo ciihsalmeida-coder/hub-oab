@@ -29,7 +29,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
       .order("criado_em", { ascending: false }),
     db
       .from("cortes")
-      .select("id, titulo, inicio_ms, fim_ms, legenda_sugerida, video_url, video_web_url, capa_url, palestrante_id, erro, tentativas, status")
+      .select("id, titulo, inicio_ms, fim_ms, legenda_sugerida, video_url, video_web_url, capa_url, quadro_url, foco_x, palestrante_id, erro, tentativas, status")
       .eq("painel_slug", slug)
       .order("ordem"),
   ]);
@@ -167,6 +167,8 @@ type Corte = {
   video_url: string | null;
   video_web_url: string | null;
   capa_url: string | null;
+  quadro_url: string | null;
+  foco_x: number | null;
   palestrante_id: string | null;
   erro: string | null;
   tentativas: number;
@@ -200,7 +202,7 @@ function Cortes({ slug, cortes, palestrantes }: { slug: string; cortes: Corte[];
                 {c.status === "publicado" ? "publicado" : "rascunho"}
               </p>
               <QuemNoCorte slug={slug} corteId={c.id} atual={c.palestrante_id} palestrantes={palestrantes} />
-              <AcoesCorte slug={slug} corteId={c.id} titulo={c.titulo} />
+              <AcoesCorte slug={slug} corteId={c.id} titulo={c.titulo} quadro={c.quadro_url} foco={c.foco_x} />
               {c.erro && <p className="text-xs font-semibold text-red-300">{c.erro}</p>}
               {c.legenda_sugerida && <p className="rounded-xl bg-white/10 p-2 text-xs">💬 {c.legenda_sugerida}</p>}
               {c.video_url && (

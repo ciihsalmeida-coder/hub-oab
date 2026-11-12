@@ -159,6 +159,27 @@ export async function removerCorte(slug: string, corteId: string) {
   atualizarSite(slug);
 }
 
+// Posição do quadro vertical escolhida pela equipe: o robô corta de novo nesse lugar.
+export async function enquadrarCorte(slug: string, corteId: string, x: number) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const r = await db
+    .from("cortes")
+    .update({
+      foco_x: Math.min(1, Math.max(0, x)),
+      foco_manual: true,
+      video_url: null,
+      video_web_url: null,
+      capa_url: null,
+      tentativas: 0,
+      erro: null,
+      status: "rascunho",
+    })
+    .eq("id", corteId);
+  if (r.error) throw r.error;
+  atualizarSite(slug);
+}
+
 export async function renomearCorte(slug: string, corteId: string, titulo: string) {
   const { db, membro } = await exigirEquipe();
   if (!membro) throw new Error("Sem permissão.");
