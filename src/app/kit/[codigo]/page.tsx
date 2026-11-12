@@ -198,13 +198,14 @@ export default async function Kit({
         )}
 
         <p className="rounded-2xl bg-card p-4 text-center text-sm text-muted">
-          Ao postar, marque <strong className="text-navy">@oabsc</strong> e use{" "}
+          Ao postar, marque <strong className="text-navy">@aduaneiro.oabsc</strong> e{" "}
+          <strong className="text-navy">@portuarioemaritimo.oabsc</strong> e use{" "}
           <strong className="text-navy">#XIVCongressoOAB</strong>.
         </p>
         <div className="flex flex-col items-center gap-2 rounded-2xl bg-navy p-5 text-center">
           <SeloMzen texto="Kit produzido por" />
           <p className="text-xs text-white/60">
-            Cobertura, cortes e tecnologia do XIV Congresso
+            Cobertura, cortes e tecnologia Mzen
           </p>
         </div>
       </div>
