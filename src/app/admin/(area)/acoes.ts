@@ -106,7 +106,7 @@ export async function removerFoto(slug: string, fotoId: string) {
   if (!membro) throw new Error("Sem permissão.");
   const { data, error } = await db.from("fotos").delete().eq("id", fotoId).select("url, miniatura_url, origem_drive_id").single();
   if (error) throw error;
-  await naoTrazerDeNovo(db, data.origem_drive_id, "foto");
+  await naoTrazerDeNovo(data.origem_drive_id, "foto");
   const caminhos = [data.url, data.miniatura_url]
     .filter(Boolean)
     .map((u) => String(u).split("/storage/v1/object/public/fotos/")[1])
@@ -116,11 +116,13 @@ export async function removerFoto(slug: string, fotoId: string) {
 }
 
 // O que a equipe removeu não volta na próxima cópia do Drive (o robô pula arquivos com 99 tentativas).
-async function naoTrazerDeNovo(db: Awaited<ReturnType<typeof exigirEquipe>>["db"], driveId: string | null, nome: string) {
+// (Grava com a chave do servidor: a regra de acesso da tabela drive_erros não deixa a equipe escrever.)
+async function naoTrazerDeNovo(driveId: string | null, nome: string) {
   if (!driveId) return;
-  await db
+  const r = await supabaseAdmin()
     .from("drive_erros")
     .upsert({ drive_id: driveId, nome, erro: "Removido pela equipe", tentativas: REMOVIDO, atualizado_em: new Date().toISOString() });
+  if (r.error) throw r.error;
 }
 
 // Tira um vídeo do painel (some do admin e do site). Se veio do Drive, não volta na próxima cópia.
@@ -134,7 +136,7 @@ export async function removerCorte(slug: string, corteId: string) {
     .select("titulo, video_url, video_web_url, capa_url, origem_drive_id")
     .single();
   if (error) throw error;
-  await naoTrazerDeNovo(db, data.origem_drive_id, data.titulo);
+  await naoTrazerDeNovo(data.origem_drive_id, data.titulo);
   const caminhos = [data.video_url, data.video_web_url, data.capa_url]
     .filter(Boolean)
     .map((u) => String(u).split("/storage/v1/object/public/cortes/")[1]?.split("?")[0])
