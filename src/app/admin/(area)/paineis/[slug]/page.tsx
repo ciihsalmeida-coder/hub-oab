@@ -20,7 +20,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
     db.from("paineis").select("slug, numero, titulo, horario, resumo, pontos, status_texto, aprovado_em, video_sessao_url").eq("slug", slug).maybeSingle(),
     db.from("palestrantes").select("id, nome").eq("painel_slug", slug).order("ordem"),
     db.from("falas").select("texto, palestrante_id, status, inicio_ms").eq("painel_slug", slug).order("ordem"),
-    db.from("fotos").select("id, url, miniatura_url, palestrante_id, status, foco_x, foco_y").eq("painel_slug", slug).order("ordem"),
+    db.from("fotos").select("id, url, miniatura_url, palestrante_id, status, foco_x, foco_y, foco_zoom").eq("painel_slug", slug).order("ordem"),
     db
       .from("envios")
       .select("id, tipo, nome, etapa, erro, atualizado_em, palestrante_id")
@@ -102,7 +102,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
             miniatura: f.miniatura_url,
             palestranteId: f.palestrante_id,
             publicada: f.status === "publicado",
-            foco: f.foco_x != null ? { x: f.foco_x, y: f.foco_y ?? 0.5 } : null,
+            foco: f.foco_x != null ? { x: f.foco_x, y: f.foco_y ?? 0.5, zoom: f.foco_zoom ?? 1 } : null,
           }))}
         />
       </Cartao>

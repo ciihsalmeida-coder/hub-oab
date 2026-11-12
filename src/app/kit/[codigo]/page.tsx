@@ -22,7 +22,7 @@ export default async function Kit({
   const { palestrante: p, painel } = kit;
   // Muda quando a equipe reenquadra ou troca as fotos: o celular busca o card novo em vez do guardado.
   const versao = kit.fotos
-    .map((f) => `${f.id}${f.foco_x ?? ""}${f.foco_y ?? ""}`)
+    .map((f) => `${f.id}${f.foco_x ?? ""}${f.foco_y ?? ""}${f.foco_zoom ?? ""}`)
     .join("")
     .split("")
     .reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7)

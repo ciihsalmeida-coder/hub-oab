@@ -116,13 +116,17 @@ export async function removerFoto(slug: string, fotoId: string) {
 }
 
 // Posição da foto no card (0 a 1, como background-position), escolhida arrastando no editor. null = automático.
-export async function definirFocoDaFoto(slug: string, fotoId: string, foco: { x: number; y: number } | null) {
+export async function definirFocoDaFoto(slug: string, fotoId: string, foco: { x: number; y: number; zoom?: number } | null) {
   const { db, membro } = await exigirEquipe();
   if (!membro) throw new Error("Sem permissão.");
   const limitar = (v: number) => Math.min(1, Math.max(0, v));
   const r = await db
     .from("fotos")
-    .update({ foco_x: foco ? limitar(foco.x) : null, foco_y: foco ? limitar(foco.y) : null })
+    .update({
+      foco_x: foco ? limitar(foco.x) : null,
+      foco_y: foco ? limitar(foco.y) : null,
+      foco_zoom: foco?.zoom && foco.zoom > 1 ? Math.min(3, foco.zoom) : null,
+    })
     .eq("id", fotoId)
     .eq("painel_slug", slug);
   if (r.error) throw r.error;

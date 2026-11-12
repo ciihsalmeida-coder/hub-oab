@@ -100,6 +100,7 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
 - (12/11) Enquadramento: fotos.foco_x/foco_y (0–1, mesma regra do CSS background-position). No /admin, "🎯 Enquadrar no
   card" abre `EnquadrarCard` (card em miniatura com moldura, sombras, lugar da frase e faixa); arrasta-se a foto e salva.
   A rota do card recorta igual (left = x·(w − largura)). Sem foco: sharp "attention" (às vezes pega o telão).
+  (12/11) fotos.foco_zoom (1–3, slider "🔍 Aproximar" no editor): o card escala cover × zoom antes de recortar.
 - (12/11) Admin: "✏️ Trocar título" e "🗑 Tirar vídeo" em cada corte. Removido vira drive_erros com tentativas 99
   (a sincronização pula; a lista de problemas do Drive ignora). Gravado com supabaseAdmin (RLS barrava a equipe).
 - (12/11) Enquadrar quem fala nos cortes: o robô tira 3 quadros do trecho e pergunta à IA (`/api/ia/enquadrar`, com o

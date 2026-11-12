@@ -7,7 +7,7 @@ import { definirFocoDaFoto, fotosEnviadas, marcarPalestranteDaFoto, removerFoto 
 import { TituloCartao } from "../../ui";
 import { EnquadrarCard } from "./EnquadrarCard";
 
-type Foto = { id: string; url: string; miniatura: string | null; palestranteId: string | null; publicada: boolean; foco: { x: number; y: number } | null };
+type Foto = { id: string; url: string; miniatura: string | null; palestranteId: string | null; publicada: boolean; foco: { x: number; y: number; zoom?: number } | null };
 
 // Reduz a foto no próprio aparelho antes de enviar: sobe rápido mesmo com internet fraca.
 async function reduzir(arquivo: File, lado: number, qualidade: number): Promise<Blob> {

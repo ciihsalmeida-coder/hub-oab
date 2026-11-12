@@ -14,17 +14,29 @@ const LARGURA = 1080;
 
 export function EnquadrarCard(props: {
   url: string;
-  inicial: { x: number; y: number } | null;
-  aoSalvar: (foco: { x: number; y: number } | null) => void;
+  inicial: { x: number; y: number; zoom?: number } | null;
+  aoSalvar: (foco: { x: number; y: number; zoom: number } | null) => void;
   aoFechar: () => void;
   salvando: boolean;
 }) {
   const caixa = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState(props.inicial ?? { x: 0.5, y: 0.5 });
+  const [pos, setPos] = useState({ x: 0.5, y: 0.5, ...props.inicial, zoom: props.inicial?.zoom ?? 1 });
+  const [tamanho, setTamanho] = useState<{ w: number; h: number } | null>(null);
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
   const [formato, setFormato] = useState<keyof typeof FORMATOS>("feed");
   const F = FORMATOS[formato];
   const arraste = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
+
+  // Tamanho do quadro da foto na tela (muda com Feed/Story e com a largura do celular).
+  useEffect(() => {
+    const el = caixa.current;
+    if (!el) return;
+    const medir = () => setTamanho({ w: el.clientWidth, h: el.clientHeight });
+    medir();
+    const obs = new ResizeObserver(medir);
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [formato]);
 
   useEffect(() => {
     const img = new Image();
@@ -33,13 +45,17 @@ export function EnquadrarCard(props: {
   }, [props.url]);
 
   // Quanto a foto passa da área visível (em px na tela), para converter o arraste em posição.
-  function sobra() {
-    const el = caixa.current;
-    if (!el || !natural) return { x: 0, y: 0 };
-    const { width, height } = el.getBoundingClientRect();
-    const escala = Math.max(width / natural.w, height / natural.h);
-    return { x: natural.w * escala - width, y: natural.h * escala - height };
+  // Com zoom 1 a foto cobre o quadro (como no card); acima disso, aproxima.
+  function escala() {
+    if (!tamanho || !natural) return 0;
+    return Math.max(tamanho.w / natural.w, tamanho.h / natural.h) * pos.zoom;
   }
+  function sobra() {
+    const e = escala();
+    if (!tamanho || !natural || !e) return { x: 0, y: 0 };
+    return { x: natural.w * e - tamanho.w, y: natural.h * e - tamanho.h };
+  }
+  const tamanhoFundo = natural && escala() ? `${natural.w * escala()}px ${natural.h * escala()}px` : "cover";
 
   const limitar = (v: number) => Math.min(1, Math.max(0, v));
 
@@ -77,7 +93,8 @@ export function EnquadrarCard(props: {
               top: `${(25 / F.card) * 100}%`,
               height: `${(F.foto / F.card) * 100}%`,
               backgroundImage: `url(${props.url})`,
-              backgroundSize: "cover",
+              backgroundSize: tamanhoFundo,
+              backgroundRepeat: "no-repeat",
               backgroundPosition: `${pos.x * 100}% ${pos.y * 100}%`,
             }}
             onPointerDown={(e) => {
@@ -89,6 +106,7 @@ export function EnquadrarCard(props: {
               if (!a) return;
               const s = sobra();
               setPos({
+                ...pos,
                 x: s.x > 0 ? limitar(a.x - (e.clientX - a.px) / s.x) : 0.5,
                 y: s.y > 0 ? limitar(a.y - (e.clientY - a.py) / s.y) : 0.5,
               });
@@ -122,6 +140,19 @@ export function EnquadrarCard(props: {
             XIV CONGRESSO NACIONAL DE DIREITO MARÍTIMO, PORTUÁRIO E ADUANEIRO
           </div>
         </div>
+        <label className="mx-auto flex max-w-xs items-center gap-3 text-sm font-semibold text-white">
+          🔍 Aproximar
+          <input
+            id="zoom-card"
+            type="range"
+            min={1}
+            max={3}
+            step={0.05}
+            value={pos.zoom}
+            onChange={(e) => setPos({ ...pos, zoom: Number(e.target.value) })}
+            className="flex-1 accent-sky"
+          />
+        </label>
         <div className="flex flex-wrap justify-center gap-2 text-sm font-bold">
           <button
             type="button"

@@ -18,7 +18,7 @@ export async function buscarKit(codigo: string) {
   const [painel, falas, fotos, cortes] = await Promise.all([
     db.from("paineis").select("titulo, numero, area, data, horario").eq("slug", p.painel_slug).single(),
     db.from("falas").select("id, texto").eq("palestrante_id", p.id).eq("status", "publicado").order("ordem"),
-    db.from("fotos").select("id, url, miniatura_url, foco_x, foco_y").eq("palestrante_id", p.id).eq("status", "publicado").order("ordem"),
+    db.from("fotos").select("id, url, miniatura_url, foco_x, foco_y, foco_zoom").eq("palestrante_id", p.id).eq("status", "publicado").order("ordem"),
     db
       .from("cortes")
       .select("id, titulo, video_url, video_web_url, capa_url")
