@@ -115,6 +115,20 @@ export async function removerFoto(slug: string, fotoId: string) {
   atualizarSite(slug);
 }
 
+// Ponto da foto onde está a pessoa (0 a 1): o card centraliza o recorte ali. null volta ao automático.
+export async function definirFocoDaFoto(slug: string, fotoId: string, foco: { x: number; y: number } | null) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const limitar = (v: number) => Math.min(1, Math.max(0, v));
+  const r = await db
+    .from("fotos")
+    .update({ foco_x: foco ? limitar(foco.x) : null, foco_y: foco ? limitar(foco.y) : null })
+    .eq("id", fotoId)
+    .eq("painel_slug", slug);
+  if (r.error) throw r.error;
+  atualizarSite(slug);
+}
+
 // O que a equipe removeu não volta na próxima cópia do Drive (o robô pula arquivos com 99 tentativas).
 // (Grava com a chave do servidor: a regra de acesso da tabela drive_erros não deixa a equipe escrever.)
 async function naoTrazerDeNovo(driveId: string | null, nome: string) {

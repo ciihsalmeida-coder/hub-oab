@@ -3,10 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { supabaseNavegador } from "@/lib/supabase/navegador";
-import { fotosEnviadas, marcarPalestranteDaFoto, removerFoto } from "../../acoes";
+import { definirFocoDaFoto, fotosEnviadas, marcarPalestranteDaFoto, removerFoto } from "../../acoes";
 import { TituloCartao } from "../../ui";
 
-type Foto = { id: string; url: string; miniatura: string | null; palestranteId: string | null; publicada: boolean };
+type Foto = { id: string; url: string; miniatura: string | null; palestranteId: string | null; publicada: boolean; foco: { x: number; y: number } | null };
 
 // Reduz a foto no próprio aparelho antes de enviar: sobe rápido mesmo com internet fraca.
 async function reduzir(arquivo: File, lado: number, qualidade: number): Promise<Blob> {
@@ -26,6 +26,8 @@ export function Fotos(props: { slug: string; fotos: Foto[]; palestrantes: { id: 
   const router = useRouter();
   const [progresso, setProgresso] = useState<{ feitas: number; total: number; erros: number } | null>(null);
   const [, iniciar] = useTransition();
+  // Foto em modo "enquadrar": mostra inteira; um toque marca onde está a pessoa.
+  const [enquadrando, setEnquadrando] = useState<string | null>(null);
 
   async function enviar(arquivos: FileList | null) {
     if (!arquivos?.length) return;
@@ -107,8 +109,41 @@ export function Fotos(props: { slug: string; fotos: Foto[]; palestrantes: { id: 
         <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {props.fotos.map((f) => (
             <li key={f.id} className="overflow-hidden rounded-xl border border-line bg-card">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={f.miniatura ?? f.url} alt="" loading="lazy" className="aspect-[4/5] w-full object-cover" />
+              {enquadrando === f.id ? (
+                <div className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={f.miniatura ?? f.url}
+                    alt="Toque no rosto da pessoa"
+                    className="w-full cursor-crosshair"
+                    onClick={(e) => {
+                      const r = e.currentTarget.getBoundingClientRect();
+                      const foco = { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
+                      iniciar(async () => {
+                        await definirFocoDaFoto(props.slug, f.id, foco);
+                        setEnquadrando(null);
+                        router.refresh();
+                      });
+                    }}
+                  />
+                  {f.foco && (
+                    <span
+                      className="pointer-events-none absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-sky"
+                      style={{ left: `${f.foco.x * 100}%`, top: `${f.foco.y * 100}%` }}
+                    />
+                  )}
+                  <p className="bg-navy px-2 py-1 text-[11px] font-semibold text-white">👆 Toque no rosto da pessoa</p>
+                </div>
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={f.miniatura ?? f.url}
+                  alt=""
+                  loading="lazy"
+                  className="aspect-[4/5] w-full object-cover"
+                  style={f.foco ? { objectPosition: `${f.foco.x * 100}% ${f.foco.y * 100}%` } : undefined}
+                />
+              )}
               <div className="space-y-2 p-2">
                 <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${f.publicada ? "bg-emerald-400/20 text-emerald-200" : "bg-amber-300/20 text-amber-200"}`}>
                   {f.publicada ? "Publicada" : "Rascunho"}
@@ -125,6 +160,23 @@ export function Fotos(props: { slug: string; fotos: Foto[]; palestrantes: { id: 
                     </option>
                   ))}
                 </select>
+                <div className="flex flex-wrap gap-x-3 gap-y-1">
+                <button
+                  type="button"
+                  onClick={() => setEnquadrando(enquadrando === f.id ? null : f.id)}
+                  className="text-xs font-semibold text-sky"
+                >
+                  {enquadrando === f.id ? "Cancelar" : f.foco ? "🎯 Reenquadrar" : "🎯 Enquadrar"}
+                </button>
+                {f.foco && enquadrando !== f.id && (
+                  <button
+                    type="button"
+                    onClick={() => iniciar(async () => { await definirFocoDaFoto(props.slug, f.id, null); router.refresh(); })}
+                    className="text-xs font-semibold text-muted"
+                  >
+                    Automático
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {
@@ -134,6 +186,7 @@ export function Fotos(props: { slug: string; fotos: Foto[]; palestrantes: { id: 
                 >
                   Remover
                 </button>
+                </div>
               </div>
             </li>
           ))}
