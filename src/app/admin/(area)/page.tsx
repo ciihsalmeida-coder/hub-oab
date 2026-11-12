@@ -31,7 +31,7 @@ export default async function Admin() {
   ]);
   const [pastas, erros] = await Promise.all([
     db.from("pastas_drive").select("drive_id", { count: "exact", head: true }),
-    db.from("drive_erros").select("nome, erro").gte("tentativas", 1),
+    db.from("drive_erros").select("nome, erro").gte("tentativas", 1).lt("tentativas", 99),
   ]);
   const { data: fotosAuto } = await supabaseAdmin().from("segredos").select("valor").eq("chave", "fotos_auto").maybeSingle();
 

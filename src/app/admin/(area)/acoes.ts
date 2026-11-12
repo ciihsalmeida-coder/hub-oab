@@ -7,6 +7,9 @@ import { gerarResumoDoDia } from "@/lib/resumo-dia";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { idDoYoutube } from "@/lib/youtube";
 
+// Marca, em drive_erros, um arquivo que a equipe removeu de propósito (fora da lista de problemas do Drive).
+const REMOVIDO = 99;
+
 type FalaRascunho = { texto: string; palestranteId: string | null; inicioMs?: number | null };
 
 function atualizarSite(slug: string) {
@@ -101,13 +104,52 @@ export async function marcarPalestranteDaFoto(slug: string, fotoId: string, pale
 export async function removerFoto(slug: string, fotoId: string) {
   const { db, membro } = await exigirEquipe();
   if (!membro) throw new Error("Sem permissão.");
-  const { data, error } = await db.from("fotos").delete().eq("id", fotoId).select("url, miniatura_url").single();
+  const { data, error } = await db.from("fotos").delete().eq("id", fotoId).select("url, miniatura_url, origem_drive_id").single();
   if (error) throw error;
+  await naoTrazerDeNovo(db, data.origem_drive_id, "foto");
   const caminhos = [data.url, data.miniatura_url]
     .filter(Boolean)
     .map((u) => String(u).split("/storage/v1/object/public/fotos/")[1])
     .filter(Boolean);
   if (caminhos.length) await db.storage.from("fotos").remove(caminhos);
+  atualizarSite(slug);
+}
+
+// O que a equipe removeu não volta na próxima cópia do Drive (o robô pula arquivos com 99 tentativas).
+async function naoTrazerDeNovo(db: Awaited<ReturnType<typeof exigirEquipe>>["db"], driveId: string | null, nome: string) {
+  if (!driveId) return;
+  await db
+    .from("drive_erros")
+    .upsert({ drive_id: driveId, nome, erro: "Removido pela equipe", tentativas: REMOVIDO, atualizado_em: new Date().toISOString() });
+}
+
+// Tira um vídeo do painel (some do admin e do site). Se veio do Drive, não volta na próxima cópia.
+export async function removerCorte(slug: string, corteId: string) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const { data, error } = await db
+    .from("cortes")
+    .delete()
+    .eq("id", corteId)
+    .select("titulo, video_url, video_web_url, capa_url, origem_drive_id")
+    .single();
+  if (error) throw error;
+  await naoTrazerDeNovo(db, data.origem_drive_id, data.titulo);
+  const caminhos = [data.video_url, data.video_web_url, data.capa_url]
+    .filter(Boolean)
+    .map((u) => String(u).split("/storage/v1/object/public/cortes/")[1]?.split("?")[0])
+    .filter(Boolean) as string[];
+  if (caminhos.length) await db.storage.from("cortes").remove(caminhos);
+  atualizarSite(slug);
+}
+
+export async function renomearCorte(slug: string, corteId: string, titulo: string) {
+  const { db, membro } = await exigirEquipe();
+  if (!membro) throw new Error("Sem permissão.");
+  const limpo = titulo.trim().slice(0, 120);
+  if (!limpo) return;
+  const r = await db.from("cortes").update({ titulo: limpo }).eq("id", corteId);
+  if (r.error) throw r.error;
   atualizarSite(slug);
 }
 

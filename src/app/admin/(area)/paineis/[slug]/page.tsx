@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AcoesCorte } from "./AcoesCorte";
 import { notFound } from "next/navigation";
 import { exigirEquipe } from "@/lib/equipe";
 import { situacaoDoPainel, Status } from "../../Status";
@@ -198,6 +199,7 @@ function Cortes({ slug, cortes, palestrantes }: { slug: string; cortes: Corte[];
                 {c.status === "publicado" ? "publicado" : "rascunho"}
               </p>
               <QuemNoCorte slug={slug} corteId={c.id} atual={c.palestrante_id} palestrantes={palestrantes} />
+              <AcoesCorte slug={slug} corteId={c.id} titulo={c.titulo} />
               {c.erro && <p className="text-xs font-semibold text-red-300">{c.erro}</p>}
               {c.legenda_sugerida && <p className="rounded-xl bg-white/10 p-2 text-xs">💬 {c.legenda_sugerida}</p>}
               {c.video_url && (
