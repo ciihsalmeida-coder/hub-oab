@@ -26,6 +26,8 @@ SUPABASE_KEY = os.environ["SUPABASE_SECRET_KEY"]
 PAINEL = sys.argv[1]
 TAXA = 100  # quadros de energia por segundo para o alinhamento
 MAX_TENTATIVAS = 3
+# Toca em qualquer celular (o Safari do iPhone recusa áudio de 4 canais e alguns vídeos 60p da câmera).
+COMPATIVEL = ["-pix_fmt", "yuv420p", "-profile:v", "high", "-level:v", "4.1", "-fpsmax", "30", "-ac", "2", "-ar", "48000"]
 CONFIANCA_MINIMA = 8  # abaixo disso o áudio e o vídeo provavelmente não são da mesma gravação
 
 
@@ -186,7 +188,7 @@ def otimizar():
                     [
                         "ffmpeg", "-v", "error", "-y", "-i", original, "-vf", escala,
                         "-c:v", "libx264", "-preset", "medium", "-crf", "27", "-maxrate", "1500k", "-bufsize", "3000k",
-                        "-g", "48", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", leve,
+                        "-g", "48", *COMPATIVEL, "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", leve,
                     ],
                     check=True,
                 )
@@ -247,7 +249,7 @@ def reduzir_grandes():
                     [
                         "ffmpeg", "-v", "error", "-y", "-i", original, "-vf", escala,
                         "-c:v", "libx264", "-preset", "veryfast", "-crf", "22", "-maxrate", "8M", "-bufsize", "16M",
-                        "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", saida,
+                        *COMPATIVEL, "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", saida,
                     ],
                     check=True,
                 )
@@ -391,7 +393,7 @@ def cortar_trecho(corte, frases, caminho_video, atraso, pasta):
                 "-ss", f"{max(0, inicio + atraso):.2f}", "-i", caminho_video, "-t", f"{fim - inicio:.2f}",
                 "-vf", f"scale=-2:1920,crop=1080:1920,subtitles={ass}",
                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-maxrate", "5M", "-bufsize", "10M",
-                "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", saida,
+                *COMPATIVEL, "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", saida,
             ],
             check=True,
         )

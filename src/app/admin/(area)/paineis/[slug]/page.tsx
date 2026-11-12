@@ -28,7 +28,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
       .order("criado_em", { ascending: false }),
     db
       .from("cortes")
-      .select("id, titulo, inicio_ms, fim_ms, legenda_sugerida, video_url, palestrante_id, erro, tentativas, status")
+      .select("id, titulo, inicio_ms, fim_ms, legenda_sugerida, video_url, video_web_url, capa_url, palestrante_id, erro, tentativas, status")
       .eq("painel_slug", slug)
       .order("ordem"),
   ]);
@@ -163,6 +163,8 @@ type Corte = {
   fim_ms: number | null;
   legenda_sugerida: string | null;
   video_url: string | null;
+  video_web_url: string | null;
+  capa_url: string | null;
   palestrante_id: string | null;
   erro: string | null;
   tentativas: number;
@@ -183,7 +185,7 @@ function Cortes({ slug, cortes, palestrantes }: { slug: string; cortes: Corte[];
         {cortes.map((c) => (
           <li key={c.id} className="flex gap-3 rounded-2xl border border-line bg-fog/40 p-3 text-sm">
             {c.video_url ? (
-              <video src={c.video_url} controls playsInline preload="metadata" className="aspect-[9/16] w-28 shrink-0 rounded-xl bg-navy object-cover" />
+              <video src={c.video_web_url ?? c.video_url} poster={c.capa_url ?? undefined} controls playsInline preload="metadata" className="aspect-[9/16] w-28 shrink-0 rounded-xl bg-navy object-cover" />
             ) : (
               <div className="grid aspect-[9/16] w-28 shrink-0 place-items-center rounded-xl bg-line/60 text-center text-xs text-muted">
                 {c.tentativas >= 3 ? "⚠️ o robô desistiu" : "⏳ cortando…"}
