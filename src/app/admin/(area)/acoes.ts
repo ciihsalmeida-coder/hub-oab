@@ -115,7 +115,7 @@ export async function removerFoto(slug: string, fotoId: string) {
   atualizarSite(slug);
 }
 
-// Ponto da foto onde está a pessoa (0 a 1): o card centraliza o recorte ali. null volta ao automático.
+// Posição da foto no card (0 a 1, como background-position), escolhida arrastando no editor. null = automático.
 export async function definirFocoDaFoto(slug: string, fotoId: string, foco: { x: number; y: number } | null) {
   const { db, membro } = await exigirEquipe();
   if (!membro) throw new Error("Sem permissão.");

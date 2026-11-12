@@ -102,7 +102,7 @@ export default async function EditarPainel({ params }: { params: Promise<{ slug:
             miniatura: f.miniatura_url,
             palestranteId: f.palestrante_id,
             publicada: f.status === "publicado",
-            foco: f.foco_x != null ? { x: f.foco_x, y: f.foco_y ?? 0.35 } : null,
+            foco: f.foco_x != null ? { x: f.foco_x, y: f.foco_y ?? 0.5 } : null,
           }))}
         />
       </Cartao>

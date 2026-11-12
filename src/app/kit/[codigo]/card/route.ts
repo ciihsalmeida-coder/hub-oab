@@ -8,8 +8,9 @@ export const dynamic = "force-dynamic";
 
 // Baixa uma imagem (com limite de tempo), ajusta o tamanho e devolve embutida no card.
 // O gerador de cards trava se tiver que buscar arquivos sozinho; se a imagem falhar, o card sai sem ela.
-// Com `foco` (0 a 1, marcado pela equipe no /admin), o recorte fica centrado nesse ponto;
-// sem ele, o sharp escolhe a parte mais chamativa (às vezes pega o telão em vez da pessoa).
+// Com `foco` (0 a 1, escolhido pela equipe arrastando a foto no editor do /admin), o recorte segue a mesma regra
+// do CSS background-position: 0 = encostado à esquerda/topo, 1 = à direita/embaixo. Sem ele, o sharp escolhe
+// a parte mais chamativa (às vezes pega o telão em vez da pessoa).
 async function embutir(url: string, largura: number, altura: number, foco?: { x: number; y: number } | null) {
   try {
     const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
@@ -20,8 +21,8 @@ async function embutir(url: string, largura: number, altura: number, foco?: { x:
       const escala = Math.max(largura / info.width, altura / info.height);
       const w = Math.round(info.width * escala);
       const h = Math.round(info.height * escala);
-      const left = Math.min(Math.max(0, Math.round(foco.x * w - largura / 2)), w - largura);
-      const top = Math.min(Math.max(0, Math.round(foco.y * h - altura / 2)), h - altura);
+      const left = Math.round(foco.x * (w - largura));
+      const top = Math.round(foco.y * (h - altura));
       jpeg = await sharp(data).resize(w, h).extract({ left, top, width: largura, height: altura }).jpeg({ quality: 82 }).toBuffer();
     } else {
       jpeg = await sharp(Buffer.from(await r.arrayBuffer()))
@@ -61,8 +62,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ codi
   // Cada card usa uma foto diferente, quando houver mais de uma.
   const indice = fala ? kit.falas.indexOf(fala) + 1 : 0;
   const fotoEvento = busca.get("fundo") === "azul" || !kit.fotos.length ? null : kit.fotos[indice % kit.fotos.length];
-  // O texto fica na parte de baixo do card: sem foco marcado no Y, centra um pouco acima do meio.
-  const foco = fotoEvento?.foco_x != null ? { x: fotoEvento.foco_x, y: fotoEvento.foco_y ?? 0.35 } : null;
+  const foco = fotoEvento?.foco_x != null ? { x: fotoEvento.foco_x, y: fotoEvento.foco_y ?? 0.5 } : null;
   const [fundo, retrato] = await Promise.all([
     fotoEvento ? embutir(fotoEvento.url, FOTO_CARD[formato].largura, FOTO_CARD[formato].altura, foco) : null,
     p.foto_url ? embutir(new URL(p.foto_url, request.url).toString(), 280, 280) : null,

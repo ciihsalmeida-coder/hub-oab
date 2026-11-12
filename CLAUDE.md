@@ -97,8 +97,9 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
   pessoa vai em "Gravações por palestrante/<nome>"; fotos de uma pessoa em "Fotos por palestrante/<nome>" (vira card
   com foto). Kit só depois de aprovar. Arquivo novo na pasta geral substitui o painel (volta a rascunho).
 
-- (12/11) Enquadramento: fotos.foco_x/foco_y (0–1). No /admin, "🎯 Enquadrar" mostra a foto inteira e um toque marca a
-  pessoa; o card recorta centrado ali (sem foco: sharp "attention", que às vezes pega o telão). "Automático" limpa.
+- (12/11) Enquadramento: fotos.foco_x/foco_y (0–1, mesma regra do CSS background-position). No /admin, "🎯 Enquadrar no
+  card" abre `EnquadrarCard` (card em miniatura com moldura, sombras, lugar da frase e faixa); arrasta-se a foto e salva.
+  A rota do card recorta igual (left = x·(w − largura)). Sem foco: sharp "attention" (às vezes pega o telão).
 - (12/11) Admin: "✏️ Trocar título" e "🗑 Tirar vídeo" em cada corte. Removido vira drive_erros com tentativas 99
   (a sincronização pula; a lista de problemas do Drive ignora). Gravado com supabaseAdmin (RLS barrava a equipe).
 - Vídeos do robô: COMPATIVEL em cortar.py (estéreo, até 30 fps, H.264 High 4.1) — a Sony A7IV grava 4 canais/60p e o
