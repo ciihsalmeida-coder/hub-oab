@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useRef, useState } from "react";
 
 // Ajuste do corte vertical: mostra o plano aberto do trecho e uma janela 9:16 que a equipe arrasta
@@ -21,9 +22,10 @@ export function EnquadrarCorte(props: {
   const esquerda = x * (1 - janela);
   const limitar = (v: number) => Math.min(1, Math.max(0, v));
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-2xl space-y-3">
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex justify-center overflow-y-auto bg-black/85 p-4" role="dialog" aria-modal="true">
+      <div className="my-auto w-full max-w-2xl space-y-3">
         <p className="text-center text-sm font-semibold text-white">👆 Arraste o quadro claro até a pessoa que está falando</p>
         <div
           ref={caixa}
@@ -74,6 +76,7 @@ export function EnquadrarCorte(props: {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

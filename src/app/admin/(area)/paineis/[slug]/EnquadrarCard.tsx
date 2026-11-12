@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 
 // Editor de enquadramento: mostra a foto dentro do card (moldura, sombra, lugar da frase e faixa do congresso)
@@ -59,9 +60,10 @@ export function EnquadrarCard(props: {
 
   const limitar = (v: number) => Math.min(1, Math.max(0, v));
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-sm space-y-3">
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex justify-center overflow-y-auto bg-black/80 p-4" role="dialog" aria-modal="true">
+      <div className="my-auto w-full max-w-sm space-y-3">
         <p className="text-center text-sm font-semibold text-white">👆 Arraste a foto até a pessoa ficar bem no card</p>
         <div className="mx-auto grid w-48 grid-cols-2 gap-1 rounded-full bg-white/10 p-1 text-xs font-bold">
           {(["feed", "story"] as const).map((f) => (
@@ -177,6 +179,7 @@ export function EnquadrarCard(props: {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
