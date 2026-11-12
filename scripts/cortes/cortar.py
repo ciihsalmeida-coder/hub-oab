@@ -91,7 +91,7 @@ def atraso_video(audio, video):
     curto dos dois (e no mínimo 20 segundos) se sobrepõe.
     """
     a = energia(audio, 70 * 60)
-    v = energia(video, 70 * 60)
+    v = energia(video, 4 * 60 * 60)  # vídeo do painel inteiro: até 4 h
     tamanho = 1 << int(np.ceil(np.log2(len(a) + len(v))))
     corr = np.fft.irfft(np.fft.rfft(v, tamanho) * np.conj(np.fft.rfft(a, tamanho)), tamanho)
     deslocamentos = np.arange(-(len(a) - 1), len(v))
