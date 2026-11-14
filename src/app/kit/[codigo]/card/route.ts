@@ -26,9 +26,12 @@ async function embutir(url: string, largura: number, altura: number, foco?: { x:
       const top = Math.round(foco.y * (h - altura));
       jpeg = await sharp(data).resize(w, h).extract({ left, top, width: largura, height: altura }).jpeg({ quality: 82 }).toBuffer();
     } else {
-      jpeg = await sharp(Buffer.from(await r.arrayBuffer()))
-        .rotate()
-        .resize(largura, altura, { fit: "cover", position: "attention" })
+      // Foto mais "em pé" que o quadro: o corte é em cima/embaixo, então mantém o topo (a cabeça da pessoa;
+      // embaixo fica o texto do card). Foto deitada: o sharp escolhe o trecho mais chamativo na horizontal.
+      const { data, info } = await sharp(Buffer.from(await r.arrayBuffer())).rotate().toBuffer({ resolveWithObject: true });
+      const emPe = info.width / info.height < largura / altura;
+      jpeg = await sharp(data)
+        .resize(largura, altura, { fit: "cover", position: emPe ? "north" : "attention" })
         .jpeg({ quality: 82 })
         .toBuffer();
     }
