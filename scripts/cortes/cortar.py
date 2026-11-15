@@ -318,7 +318,7 @@ def cortar():
             "origem": "eq.auto",
             "video_url": "is.null",
             "tentativas": f"lt.{MAX_TENTATIVAS}",
-            "select": "id,inicio_ms,fim_ms,tentativas,envio_id,foco_x,palestrante_id",
+            "select": "id,inicio_ms,fim_ms,tentativas,envio_id,foco_x,foco_y,foco_zoom,palestrante_id",
             "order": "ordem",
         },
     )
@@ -374,7 +374,7 @@ def cortar_grupo(cortes, base, videos):
             cabem = [c for c in pendentes if c["inicio_ms"] / 1000 + atraso >= 0 and c["fim_ms"] / 1000 + atraso <= total]
             for corte in cabem:
                 pendentes.remove(corte)
-                cortar_trecho(corte, frases, caminho_video, atraso, pasta, largura_vertical(caminho_video))
+                cortar_trecho(corte, frases, caminho_video, atraso, pasta, tamanho_video(caminho_video))
             os.remove(caminho_video)
         if pendentes:
             nomes = ", ".join(v["nome"] or "?" for v in videos)
@@ -385,8 +385,8 @@ def cortar_grupo(cortes, base, videos):
             )
 
 
-def largura_vertical(caminho):
-    """Largura do vídeo depois de escalado para 1920 de altura (o corte 9:16 pega 1080 dela)."""
+def tamanho_video(caminho):
+    """Largura e altura do vídeo como ele aparece (já contando a rotação do celular)."""
     saida = subprocess.run(
         ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height:stream_side_data=rotation",
          "-of", "json", caminho],
@@ -396,7 +396,24 @@ def largura_vertical(caminho):
     w, h = v["width"], v["height"]
     if any(abs(d.get("rotation", 0)) == 90 for d in v.get("side_data_list", [])):
         w, h = h, w
-    return w * 1920 / h
+    return w, h
+
+
+# Quanto da altura do corte a pessoa deve ocupar, e até quanto aproximar (zoom digital: acima disso borra).
+ALTURA_ALVO = 0.42
+ZOOM_MAXIMO = 2.6
+ROSTO_NO_QUADRO = 0.36  # o rosto fica a 36% do topo; a legenda vai embaixo
+
+
+def janela(tamanho, zoom, fx, fy):
+    """Recorte 9:16 no vídeo original: (largura, altura, x, y) em pixels pares."""
+    iw, ih = tamanho
+    h = ih / zoom
+    w = min(iw, h * 9 / 16)
+    x = (iw - w) * fx
+    y = (ih - h) * fy
+    par = lambda v: int(v) // 2 * 2  # noqa: E731
+    return par(w), par(h), par(x), par(y)
 
 
 _token = None
@@ -435,26 +452,46 @@ def onde_esta_quem_fala(corte, caminho_video, ini, fim, pasta):
     try:
         with urllib.request.urlopen(req, timeout=150) as r:
             resposta = json.loads(r.read())
-        print(f"IA: quem fala está em {resposta.get('centro_x')} (achou: {resposta.get('achou')})")
-        return resposta["centro_x"] if resposta.get("achou") else None
+        print(f"IA: quem fala está em x={resposta.get('centro_x')} y={resposta.get('centro_y')}, "
+              f"ocupa {resposta.get('altura_pessoa')} da altura (achou: {resposta.get('achou')})")
+        return resposta if resposta.get("achou") else None
     except Exception as erro:  # noqa: BLE001 - sem a IA, corta no meio
         print(f"Não consegui perguntar à IA onde está quem fala: {erro}")
         return None
 
 
-def cortar_trecho(corte, frases, caminho_video, atraso, pasta, largura):
+def enquadrar(corte, tamanho, caminho_video, ini, fim, pasta):
+    """Zoom e posição do quadro 9:16: guardados no corte (ajuste da equipe) ou perguntados à IA."""
+    iw, ih = tamanho
+    if corte.get("foco_x") is not None and corte.get("foco_zoom"):
+        return corte["foco_zoom"], corte["foco_x"], corte.get("foco_y") or 0.0
+    if corte.get("foco_x") is not None:  # ajuste antigo, só horizontal
+        return 1.0, corte["foco_x"], 0.0
+    if iw / ih <= 9 / 16 + 0.01:  # vídeo já em pé: não há o que escolher
+        return 1.0, 0.5, 0.0
+    r = onde_esta_quem_fala(corte, caminho_video, ini, fim, pasta)
+    if not r:
+        return 1.0, 0.5, 0.0
+    cx, cy = float(r["centro_x"]), float(r.get("centro_y") or 0.4)
+    pessoa = float(r.get("altura_pessoa") or 0)
+    zoom = min(ZOOM_MAXIMO, max(1.0, ALTURA_ALVO / pessoa)) if pessoa > 0.02 else 1.0
+    h = ih / zoom
+    w = min(iw, h * 9 / 16)
+    # Do centro do rosto para a posição da janela (0 = encostada à esquerda/topo, 1 = à direita/embaixo).
+    fx = min(1.0, max(0.0, (cx * iw - w / 2) / (iw - w))) if iw > w else 0.5
+    fy = min(1.0, max(0.0, (cy * ih - h * ROSTO_NO_QUADRO) / (ih - h))) if ih > h else 0.0
+    return zoom, fx, fy
+
+
+def cortar_trecho(corte, frases, caminho_video, atraso, pasta, tamanho):
     try:
         inicio = corte["inicio_ms"] / 1000
         fim = corte["fim_ms"] / 1000
         # Imagem do plano aberto (para o ajuste manual no /admin) e posição do quadro vertical.
         imagem = os.path.join(pasta, f"{corte['id']}-quadro.jpg")
         quadro(caminho_video, inicio + atraso + (fim - inicio) / 2, imagem, 960)
-        foco = corte.get("foco_x")
-        if foco is None and largura > 1080:
-            centro = onde_esta_quem_fala(corte, caminho_video, inicio + atraso, fim + atraso, pasta)
-            # De "onde está o rosto" para a posição do quadro (0 = encostado à esquerda, 1 = à direita).
-            foco = 0.5 if centro is None else min(1.0, max(0.0, (centro * largura - 540) / (largura - 1080)))
-        foco = 0.5 if foco is None else foco
+        zoom, foco, foco_y = enquadrar(corte, tamanho, caminho_video, inicio + atraso, fim + atraso, pasta)
+        w, h, x, y = janela(tamanho, zoom, foco, foco_y)
         ass = os.path.join(pasta, f"{corte['id']}.ass")
         saida = os.path.join(pasta, f"{corte['id']}.mp4")
         legenda_ass(frases, inicio, fim, ass)
@@ -462,7 +499,7 @@ def cortar_trecho(corte, frases, caminho_video, atraso, pasta, largura):
             [
                 "ffmpeg", "-v", "error", "-y",
                 "-ss", f"{max(0, inicio + atraso):.2f}", "-i", caminho_video, "-t", f"{fim - inicio:.2f}",
-                "-vf", f"scale=-2:1920,crop=1080:1920:(iw-1080)*{foco:.4f}:0,subtitles={ass}",
+                "-vf", f"crop={w}:{h}:{x}:{y},scale=1080:1920:flags=lanczos,setsar=1,subtitles={ass}",
                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-maxrate", "5M", "-bufsize", "10M",
                 *COMPATIVEL, "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", saida,
             ],
@@ -494,10 +531,10 @@ def cortar_trecho(corte, frases, caminho_video, atraso, pasta, largura):
             {"id": f"eq.{corte['id']}"},
             {
                 "video_url": url, "video_web_url": None, "capa_url": None, "erro": None, "status": "rascunho",
-                "foco_x": foco, "quadro_url": f"{SUPABASE_URL}/storage/v1/object/public/cortes/{destino_quadro}?v={int(os.path.getmtime(imagem))}",
+                "foco_x": foco, "foco_y": foco_y, "foco_zoom": zoom, "quadro_url": f"{SUPABASE_URL}/storage/v1/object/public/cortes/{destino_quadro}?v={int(os.path.getmtime(imagem))}",
             },
         )
-        print(f"Corte pronto: {destino} (quadro em {foco:.2f})")
+        print(f"Corte pronto: {destino} (zoom {zoom:.2f}, quadro em x={foco:.2f} y={foco_y:.2f})")
     except Exception as erro:  # noqa: BLE001 - registra e segue para o próximo corte
         print(f"Falha no corte {corte['id']}: {erro}")
         atualizar(

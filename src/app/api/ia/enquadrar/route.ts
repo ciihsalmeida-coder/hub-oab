@@ -11,9 +11,14 @@ export const dynamic = "force-dynamic";
 const esquema = {
   type: "object",
   additionalProperties: false,
-  required: ["centro_x", "achou"],
+  required: ["centro_x", "centro_y", "altura_pessoa", "achou"],
   properties: {
     centro_x: { type: "number", description: "Posição horizontal do centro do rosto de quem fala, de 0 (esquerda) a 1 (direita)." },
+    centro_y: { type: "number", description: "Posição vertical do centro do rosto de quem fala, de 0 (topo) a 1 (base)." },
+    altura_pessoa: {
+      type: "number",
+      description: "Fração da altura da imagem ocupada pela pessoa que fala, do topo da cabeça até os pés ou a base da cadeira/púlpito (ex.: 0.12).",
+    },
     achou: { type: "boolean", description: "false se não deu para identificar quem está falando." },
   },
 };
@@ -43,7 +48,7 @@ export async function POST(request: NextRequest) {
               type: "text" as const,
               text: `São quadros de um mesmo trecho de vídeo de um painel de congresso, gravado em plano aberto.
 ${palestrante ? `Quem está falando neste trecho é ${palestrante}.` : "Descubra quem está falando."}
-Indique a posição horizontal do centro do rosto da pessoa que está falando: quem fala ao microfone, com a boca aberta, gesticulando ou de pé no púlpito.
+Indique a posição (horizontal e vertical) do centro do rosto da pessoa que está falando e que fração da altura da imagem o corpo dela ocupa: quem fala ao microfone, com a boca aberta, gesticulando ou de pé no púlpito.
 Ignore pessoas que aparecem dentro do telão ou de slides. Se não der para saber, responda achou = false.`,
             },
           ],
@@ -53,6 +58,12 @@ Ignore pessoas que aparecem dentro do telão ou de slides. Se não der para sabe
     .finalMessage();
   if (resposta.stop_reason === "refusal") return NextResponse.json({ achou: false });
   const texto = resposta.content.map((b) => (b.type === "text" ? b.text : "")).join("");
-  const r = JSON.parse(texto) as { centro_x: number; achou: boolean };
-  return NextResponse.json({ achou: r.achou, centro_x: Math.min(1, Math.max(0, Number(r.centro_x) || 0.5)) });
+  const r = JSON.parse(texto) as { centro_x: number; centro_y: number; altura_pessoa: number; achou: boolean };
+  const limitar = (v: number, padrao: number) => Math.min(1, Math.max(0, Number(v) || padrao));
+  return NextResponse.json({
+    achou: r.achou,
+    centro_x: limitar(r.centro_x, 0.5),
+    centro_y: limitar(r.centro_y, 0.4),
+    altura_pessoa: limitar(r.altura_pessoa, 0),
+  });
 }
