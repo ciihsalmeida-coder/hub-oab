@@ -15,7 +15,7 @@ export type PainelPublico = Omit<PainelFixo, "palestrantes"> & {
   pontos: string[];
 };
 
-export type Fala = { id: string; texto: string; palestranteId: string | null; ordem: number };
+export type Fala = { id: string; texto: string; palestranteId: string | null; ordem: number; autor?: string | null };
 export type Corte = {
   id: string;
   titulo: string;
@@ -96,7 +96,7 @@ export async function buscarConteudo(slug: string): Promise<ConteudoPainel | nul
     const [painel, palestrantes, falas, cortes, fotos] = await Promise.all([
       db.from("paineis").select(colunasPainel).eq("slug", slug).maybeSingle(),
       db.from("palestrantes").select(colunasPalestrante).eq("painel_slug", slug).order("ordem"),
-      db.from("falas").select("id, texto, palestrante_id, ordem").eq("painel_slug", slug).order("ordem"),
+      db.from("falas").select("id, texto, palestrante_id, ordem, autor").eq("painel_slug", slug).order("ordem"),
       db
         .from("cortes")
         .select("id, titulo, video_url, video_web_url, capa_url, legenda_sugerida, palestrante_id")
@@ -109,7 +109,7 @@ export async function buscarConteudo(slug: string): Promise<ConteudoPainel | nul
     if (!painel.data) return null;
     return {
       ...montar(painel.data as LinhaPainel, (palestrantes.data ?? []) as LinhaPalestrante[]),
-      falas: (falas.data ?? []).map((f) => ({ id: f.id, texto: f.texto, palestranteId: f.palestrante_id, ordem: f.ordem })),
+      falas: (falas.data ?? []).map((f) => ({ id: f.id, texto: f.texto, palestranteId: f.palestrante_id, ordem: f.ordem, autor: f.autor })),
       cortes: (cortes.data ?? []).map((c) => ({
         id: c.id,
         titulo: c.titulo,

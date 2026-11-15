@@ -130,7 +130,8 @@ export default async function PainelPage({ params }: { params: Promise<{ slug: s
                   <li key={f.id}>
                     <blockquote className="rounded-2xl bg-navy p-5 text-white">
                       <p className="text-lg leading-snug font-semibold">“{f.texto}”</p>
-                      {quem && <footer className="mt-2 text-sm text-sky">{quem.nome}</footer>}
+                      {/* `autor`: quem falou e não é palestrante do painel (ex.: autoridade na abertura). */}
+                      {(quem?.nome ?? f.autor) && <footer className="mt-2 text-sm text-sky">{quem?.nome ?? f.autor}</footer>}
                     </blockquote>
                   </li>
                 );
