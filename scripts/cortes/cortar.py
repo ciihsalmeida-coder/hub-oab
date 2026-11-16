@@ -85,7 +85,7 @@ def energia(caminho, segundos):
     return (env - env.mean()) / (env.std() + 1e-6)
 
 
-def atraso_video(audio, video):
+def atraso_video(audio, video, perto=None, janela=120):
     """Segundos a somar aos tempos do áudio da mesa para achar o mesmo instante no vídeo.
 
     Procura em qualquer posição: o vídeo pode ser um trecho curto (a câmera grava em vários arquivos)
@@ -101,6 +101,8 @@ def atraso_video(audio, video):
     sobreposicao = np.minimum(len(a), len(v) - deslocamentos) - np.maximum(0, -deslocamentos)
     minimo = max(20 * TAXA, min(len(a), len(v)) // 2)
     validos = sobreposicao >= minimo
+    if perto is not None:  # só perto do que o relógio da câmera indica
+        validos &= np.abs(deslocamentos / TAXA - perto) <= janela
     if not validos.any():
         return 0.0, 0.0
     normalizados = np.where(validos, valores / np.maximum(sobreposicao, 1), -np.inf)
@@ -345,6 +347,32 @@ def cortar():
         cortar_grupo(lista, base, videos, envios)
 
 
+CONFIANCA_RELOGIO = 4  # com a pista do relógio a busca é estreita, então o pico pode ser mais baixo
+
+
+def pista_do_relogio(base, video, caminho_video):
+    """Atraso aproximado pelo relógio: o nome do áudio é a hora de início (ex.: 16-39-46.wav) e o Drive guarda
+    a hora em que a câmera fechou o arquivo; menos a duração do vídeo dá a hora de início do vídeo."""
+    import datetime as dt
+    import re
+    m = re.match(r"(\d{2})-(\d{2})-(\d{2})", base.get("nome") or "")
+    if not m:
+        return None
+    try:
+        req = urllib.request.Request(
+            f"https://www.googleapis.com/drive/v3/files/{video['origem_drive_id']}?fields=modifiedTime&supportsAllDrives=true")
+        req.add_header("Authorization", f"Bearer {token_drive()}")
+        with urllib.request.urlopen(req, timeout=60) as r:
+            fim = dt.datetime.fromisoformat(json.loads(r.read())["modifiedTime"].replace("Z", "+00:00"))
+    except Exception as erro:
+        print(f"Sem a hora do vídeo no Drive: {erro}")
+        return None
+    fim_local = fim.astimezone(dt.timezone(dt.timedelta(hours=-3)))  # Brasília
+    fim_s = fim_local.hour * 3600 + fim_local.minute * 60 + fim_local.second
+    inicio_audio = int(m[1]) * 3600 + int(m[2]) * 60 + int(m[3])
+    return inicio_audio - (fim_s - duracao(caminho_video))
+
+
 def partes_vizinhas(base, envios):
     """Partes da mesma gravação logo antes e logo depois desta (o gravador divide a cada 30 min)."""
     irmas = sorted(
@@ -406,6 +434,13 @@ def cortar_grupo(cortes, base, videos, envios=()):
                 print(f"Atraso calculado: {atraso:+.2f}s (confiança {confianca:.2f})")
                 if confianca < CONFIANCA_MINIMA:
                     atraso = atraso_pela_vizinha(base, caminho_audio, caminho_video, envios, pasta, cache_vizinhas)
+                if atraso is None:
+                    pista = pista_do_relogio(base, video, caminho_video)
+                    if pista is not None:
+                        atraso, confianca = atraso_video(caminho_audio, caminho_video, perto=pista)
+                        print(f"Pelo relógio da câmera: perto de {pista:+.0f}s → {atraso:+.2f}s (confiança {confianca:.2f})")
+                        if confianca < CONFIANCA_RELOGIO:
+                            atraso = None
                 if atraso is None:
                     print(f"“{video['nome']}” não parece ser da mesma gravação de “{base['nome']}”; tentando o próximo.")
                     os.remove(caminho_video)
