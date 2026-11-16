@@ -373,8 +373,24 @@ def pista_do_relogio(base, video, caminho_video):
     return inicio_audio - (fim_s - duracao(caminho_video))
 
 
-def partes_vizinhas(base, envios):
-    """Partes da mesma gravação logo antes e logo depois desta (o gravador divide a cada 30 min)."""
+def atraso_de_parte(parte, caminho, caminho_video, video):
+    """Atraso de uma parte do áudio no vídeo, pelo som ou pelo relógio da câmera; None se não bater."""
+    atraso, confianca = atraso_video(caminho, caminho_video)
+    if confianca >= CONFIANCA_MINIMA:
+        return atraso
+    pista = pista_do_relogio(parte, video, caminho_video) if video is not None else None
+    if pista is None:
+        return None
+    atraso, confianca = atraso_video(caminho, caminho_video, perto=pista)
+    print(f"Parte {parte['nome']} pelo relógio: {atraso:+.2f}s (confiança {confianca:.2f})")
+    return atraso if confianca >= CONFIANCA_RELOGIO else None
+
+
+def atraso_pela_vizinha(base, caminho_audio, caminho_video, envios, pasta, cache, video=None):
+    """Quando esta parte não bate sozinha com o vídeo, usa outra parte da mesma gravação: as partes são
+    contínuas, então o atraso desta = atraso da outra ∓ a soma das durações entre as duas. Tenta da mais
+    perto para a mais longe. O ajuste fino de cada corte (ajuste_fino) corrige a pequena diferença de
+    relógio entre gravador e câmera."""
     irmas = sorted(
         (e for e in envios if e["tipo"] == "audio" and e.get("palestrante_id") == base.get("palestrante_id")
          and e.get("origem_drive_id")),
@@ -382,40 +398,49 @@ def partes_vizinhas(base, envios):
     )
     i = next((k for k, e in enumerate(irmas) if e["id"] == base["id"]), None)
     if i is None:
-        return None, None
-    return (irmas[i - 1] if i > 0 else None), (irmas[i + 1] if i + 1 < len(irmas) else None)
+        return None
+    cache[base["id"]] = caminho_audio
 
-
-def atraso_pela_vizinha(base, caminho_audio, caminho_video, envios, pasta, cache, video=None):
-    """Quando esta parte não bate sozinha com o vídeo, usa a parte vizinha: as partes são contínuas,
-    então atraso(esta) = atraso(seguinte) − duração(esta), ou atraso(anterior) + duração(anterior)."""
-    anterior, seguinte = partes_vizinhas(base, envios)
-    for vizinha, sinal in ((seguinte, 1), (anterior, -1)):
-        if not vizinha:
-            continue
-        caminho = cache.get(vizinha["id"])
+    def baixar(parte):
+        caminho = cache.get(parte["id"])
         if not caminho:
-            caminho = os.path.join(pasta, f"vizinha-{vizinha['id']}")
-            print(f"Baixando a parte vizinha para sincronizar: {vizinha['nome']}…")
-            baixar_drive(vizinha["origem_drive_id"], caminho)
-            cache[vizinha["id"]] = caminho
-        atraso, confianca = atraso_video(caminho, caminho_video)
-        print(f"Atraso da parte vizinha {vizinha['nome']}: {atraso:+.2f}s (confiança {confianca:.2f})")
-        if confianca < CONFIANCA_MINIMA and video is not None:
-            pista = pista_do_relogio(vizinha, video, caminho_video)
-            if pista is not None:
-                atraso, confianca = atraso_video(caminho, caminho_video, perto=pista)
-                print(f"Parte vizinha pelo relógio: {atraso:+.2f}s (confiança {confianca:.2f})")
-                if confianca < CONFIANCA_RELOGIO:
-                    continue
-            else:
-                continue
-        elif confianca < CONFIANCA_MINIMA:
+            caminho = os.path.join(pasta, f"vizinha-{parte['id']}")
+            print(f"Baixando a parte vizinha para sincronizar: {parte['nome']}…")
+            baixar_drive(parte["origem_drive_id"], caminho)
+            cache[parte["id"]] = caminho
+        return caminho
+
+    ordem = sorted((k for k in range(len(irmas)) if k != i), key=lambda k: (abs(k - i), k < i))
+    for k in ordem:
+        outra = irmas[k]
+        atraso = atraso_de_parte(outra, baixar(outra), caminho_video, video)
+        if atraso is None:
             continue
-        resultado = atraso - duracao(caminho_audio) if sinal == 1 else atraso + duracao(caminho)
-        print(f"Atraso desta parte pela vizinha: {resultado:+.2f}s")
+        entre = range(i, k) if k > i else range(k, i)
+        soma = sum(duracao(baixar(irmas[j])) for j in entre)
+        resultado = atraso - soma if k > i else atraso + soma
+        print(f"Atraso desta parte pela parte {outra['nome']}: {resultado:+.2f}s")
         return resultado
     return None
+
+
+def ajuste_fino(caminho_audio, caminho_video, atraso, inicio, fim, pasta):
+    """Acerta o atraso só no trecho do corte (o relógio do gravador e o da câmera andam um pouco diferente)."""
+    a0 = max(0.0, inicio - 30)
+    v0 = max(0.0, inicio + atraso - 45)
+    trecho_a = os.path.join(pasta, "fino-a.wav")
+    trecho_v = os.path.join(pasta, "fino-v.wav")
+    try:
+        for origem, comeco, dur, destino in ((caminho_audio, a0, fim - inicio + 60, trecho_a),
+                                             (caminho_video, v0, fim - inicio + 90, trecho_v)):
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(comeco), "-t", str(dur), "-i", origem,
+                            "-vn", "-ac", "1", "-ar", "8000", destino], check=True)
+        desloc, confianca = atraso_video(trecho_a, trecho_v, perto=(inicio + atraso - v0) - (inicio - a0), janela=15)
+    except subprocess.CalledProcessError:
+        return atraso
+    novo = v0 + desloc - a0
+    print(f"Ajuste fino no trecho: {atraso:+.2f}s → {novo:+.2f}s (confiança {confianca:.2f})")
+    return novo if confianca >= 6 and abs(novo - atraso) <= 15 else atraso
 
 
 def cortar_grupo(cortes, base, videos, envios=()):
@@ -457,7 +482,11 @@ def cortar_grupo(cortes, base, videos, envios=()):
             cabem = [c for c in pendentes if c["inicio_ms"] / 1000 + atraso >= 0 and c["fim_ms"] / 1000 + atraso <= total]
             for corte in cabem:
                 pendentes.remove(corte)
-                cortar_trecho(corte, frases, caminho_video, atraso, pasta, tamanho_video(caminho_video))
+                proprio = atraso
+                if caminho_audio:
+                    proprio = ajuste_fino(caminho_audio, caminho_video, atraso,
+                                          corte["inicio_ms"] / 1000, corte["fim_ms"] / 1000, pasta)
+                cortar_trecho(corte, frases, caminho_video, proprio, pasta, tamanho_video(caminho_video))
             os.remove(caminho_video)
         if pendentes:
             nomes = ", ".join(v["nome"] or "?" for v in videos)
