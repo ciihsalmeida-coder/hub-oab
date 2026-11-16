@@ -342,11 +342,48 @@ def cortar():
         if not base or not videos:
             print(f"Falta o vídeo ou a transcrição de {len(lista)} corte(s); ficam esperando.")
             continue
-        cortar_grupo(lista, base, videos)
+        cortar_grupo(lista, base, videos, envios)
 
 
-def cortar_grupo(cortes, base, videos):
+def partes_vizinhas(base, envios):
+    """Partes da mesma gravação logo antes e logo depois desta (o gravador divide a cada 30 min)."""
+    irmas = sorted(
+        (e for e in envios if e["tipo"] == "audio" and e.get("palestrante_id") == base.get("palestrante_id")
+         and e.get("origem_drive_id")),
+        key=lambda e: e["nome"] or "",
+    )
+    i = next((k for k, e in enumerate(irmas) if e["id"] == base["id"]), None)
+    if i is None:
+        return None, None
+    return (irmas[i - 1] if i > 0 else None), (irmas[i + 1] if i + 1 < len(irmas) else None)
+
+
+def atraso_pela_vizinha(base, caminho_audio, caminho_video, envios, pasta, cache):
+    """Quando esta parte não bate sozinha com o vídeo, usa a parte vizinha: as partes são contínuas,
+    então atraso(esta) = atraso(seguinte) + duração(esta), ou atraso(anterior) − duração(anterior)."""
+    anterior, seguinte = partes_vizinhas(base, envios)
+    for vizinha, sinal in ((seguinte, 1), (anterior, -1)):
+        if not vizinha:
+            continue
+        caminho = cache.get(vizinha["id"])
+        if not caminho:
+            caminho = os.path.join(pasta, f"vizinha-{vizinha['id']}")
+            print(f"Baixando a parte vizinha para sincronizar: {vizinha['nome']}…")
+            baixar_drive(vizinha["origem_drive_id"], caminho)
+            cache[vizinha["id"]] = caminho
+        atraso, confianca = atraso_video(caminho, caminho_video)
+        print(f"Atraso da parte vizinha {vizinha['nome']}: {atraso:+.2f}s (confiança {confianca:.2f})")
+        if confianca < CONFIANCA_MINIMA:
+            continue
+        resultado = atraso + duracao(caminho_audio) if sinal == 1 else atraso - duracao(caminho)
+        print(f"Atraso desta parte pela vizinha: {resultado:+.2f}s")
+        return resultado
+    return None
+
+
+def cortar_grupo(cortes, base, videos, envios=()):
     """Corta os trechos de uma gravação. Com vários vídeos, cada corte sai do vídeo que contém o trecho."""
+    cache_vizinhas = {}
     pendentes = list(cortes)
     with tempfile.TemporaryDirectory() as pasta:
         caminho_audio = None
@@ -368,6 +405,8 @@ def cortar_grupo(cortes, base, videos):
                 atraso, confianca = atraso_video(caminho_audio, caminho_video)
                 print(f"Atraso calculado: {atraso:+.2f}s (confiança {confianca:.2f})")
                 if confianca < CONFIANCA_MINIMA:
+                    atraso = atraso_pela_vizinha(base, caminho_audio, caminho_video, envios, pasta, cache_vizinhas)
+                if atraso is None:
                     print(f"“{video['nome']}” não parece ser da mesma gravação de “{base['nome']}”; tentando o próximo.")
                     os.remove(caminho_video)
                     continue
