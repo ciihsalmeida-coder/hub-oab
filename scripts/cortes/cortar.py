@@ -360,7 +360,7 @@ def partes_vizinhas(base, envios):
 
 def atraso_pela_vizinha(base, caminho_audio, caminho_video, envios, pasta, cache):
     """Quando esta parte não bate sozinha com o vídeo, usa a parte vizinha: as partes são contínuas,
-    então atraso(esta) = atraso(seguinte) + duração(esta), ou atraso(anterior) − duração(anterior)."""
+    então atraso(esta) = atraso(seguinte) − duração(esta), ou atraso(anterior) + duração(anterior)."""
     anterior, seguinte = partes_vizinhas(base, envios)
     for vizinha, sinal in ((seguinte, 1), (anterior, -1)):
         if not vizinha:
@@ -375,7 +375,7 @@ def atraso_pela_vizinha(base, caminho_audio, caminho_video, envios, pasta, cache
         print(f"Atraso da parte vizinha {vizinha['nome']}: {atraso:+.2f}s (confiança {confianca:.2f})")
         if confianca < CONFIANCA_MINIMA:
             continue
-        resultado = atraso + duracao(caminho_audio) if sinal == 1 else atraso - duracao(caminho)
+        resultado = atraso - duracao(caminho_audio) if sinal == 1 else atraso + duracao(caminho)
         print(f"Atraso desta parte pela vizinha: {resultado:+.2f}s")
         return resultado
     return None
