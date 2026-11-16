@@ -400,7 +400,7 @@ def tamanho_video(caminho):
 
 
 # Quanto da altura do corte a pessoa deve ocupar, e até quanto aproximar (zoom digital: acima disso borra).
-ALTURA_ALVO = 0.42
+ALTURA_ALVO = 0.6
 ZOOM_MAXIMO = 2.6
 ROSTO_NO_QUADRO = 0.36  # o rosto fica a 36% do topo; a legenda vai embaixo
 
