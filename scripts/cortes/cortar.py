@@ -191,7 +191,7 @@ def otimizar():
                 subprocess.run(
                     [
                         "ffmpeg", "-v", "error", "-y", "-i", original, "-vf", escala,
-                        "-c:v", "libx264", "-preset", "medium", "-crf", "27", "-maxrate", "1500k", "-bufsize", "3000k",
+                        "-c:v", "libx264", "-preset", "medium", "-crf", "23", "-maxrate", "2500k", "-bufsize", "5000k",
                         "-g", "48", *COMPATIVEL, "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", leve,
                     ],
                     check=True,
@@ -663,10 +663,13 @@ def cortar_trecho(corte, frases, caminho_video, atraso, pasta, tamanho, caminho_
                 *(["-i", limpo] if limpo else ["-ss", f"{inicio:.2f}", "-i", caminho_audio] if caminho_audio else []),
                 "-t", f"{fim - inicio:.2f}",
                 "-map", "0:v:0", "-map", "1:a:0" if caminho_audio else "0:a:0?",
-                "-vf", f"crop={w}:{h}:{x}:{y},scale=1080:1920:flags=lanczos,setsar=1,subtitles={ass}",
+                # Imagem: tira o granulado antes de ampliar (o zoom digital aumenta o ruído), amplia com lanczos,
+                # devolve nitidez (cas) e um pouco de contraste; a legenda entra por último, sem ser afiada.
+                "-vf", (f"crop={w}:{h}:{x}:{y},hqdn3d=1.5:1.5:4:4,scale=1080:1920:flags=lanczos,setsar=1,"
+                        f"cas=strength=0.7,eq=contrast=1.04:saturation=1.06,subtitles={ass}"),
                 "-af", "highpass=f=80,loudnorm=I=-16:TP=-1.5:LRA=11" if limpo else filtro_som(),
-                "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-maxrate", "5M", "-bufsize", "10M",
-                *COMPATIVEL, "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", saida,
+                "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-maxrate", "10M", "-bufsize", "20M",
+                *COMPATIVEL, "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", saida,
             ],
             check=True,
         )
