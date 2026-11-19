@@ -22,12 +22,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
       - name: Instalar ffmpeg e dependências
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
-          pip install --quiet numpy google-auth requests
+          pip install --quiet "numpy<2" google-auth requests
+      - name: Instalar o removedor de ruído de voz (DeepFilterNet)
+        continue-on-error: true
+        run: |
+          pip install --quiet torch==2.0.1 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+          pip install --quiet deepfilternet==0.5.6
+          deepFilter --help > /dev/null && echo "DeepFilterNet pronto"
       - name: Cortar
         env:
           SUPABASE_URL: https://fznihnlsnshbkfkkisvg.supabase.co

@@ -623,6 +623,24 @@ def filtro_som():
     return _filtro_som
 
 
+def voz_limpa(caminho_audio, inicio, duracao_s, pasta, nome):
+    """Trecho do áudio da mesa limpo pelo DeepFilterNet (IA que separa a voz do ruído). None se não der."""
+    import shutil
+    if not shutil.which("deepFilter"):
+        return None
+    bruto = os.path.join(pasta, f"{nome}-bruto.wav")
+    saida = os.path.join(pasta, f"{nome}-df")
+    try:
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{inicio:.2f}", "-t", f"{duracao_s:.2f}", "-i", caminho_audio,
+                        "-vn", "-ac", "1", "-ar", "48000", bruto], check=True)
+        subprocess.run(["deepFilter", bruto, "-o", saida], check=True, capture_output=True, timeout=900)
+        pronto = [os.path.join(saida, f) for f in os.listdir(saida) if f.endswith(".wav")]
+        return pronto[0] if pronto else None
+    except Exception as erro:  # noqa: BLE001
+        print(f"DeepFilterNet não funcionou ({erro}); usando o filtro de voz simples.")
+        return None
+
+
 def cortar_trecho(corte, frases, caminho_video, atraso, pasta, tamanho, caminho_audio=None):
     try:
         inicio = corte["inicio_ms"] / 1000
@@ -635,15 +653,18 @@ def cortar_trecho(corte, frases, caminho_video, atraso, pasta, tamanho, caminho_
         ass = os.path.join(pasta, f"{corte['id']}.ass")
         saida = os.path.join(pasta, f"{corte['id']}.mp4")
         legenda_ass(frases, inicio, fim, ass)
+        limpo = voz_limpa(caminho_audio, inicio, fim - inicio, pasta, corte["id"]) if caminho_audio else None
+        if limpo:
+            print("Som limpo pelo DeepFilterNet.")
         subprocess.run(
             [
                 "ffmpeg", "-v", "error", "-y",
                 "-ss", f"{max(0, inicio + atraso):.2f}", "-i", caminho_video,
-                *(["-ss", f"{inicio:.2f}", "-i", caminho_audio] if caminho_audio else []),
+                *(["-i", limpo] if limpo else ["-ss", f"{inicio:.2f}", "-i", caminho_audio] if caminho_audio else []),
                 "-t", f"{fim - inicio:.2f}",
                 "-map", "0:v:0", "-map", "1:a:0" if caminho_audio else "0:a:0?",
                 "-vf", f"crop={w}:{h}:{x}:{y},scale=1080:1920:flags=lanczos,setsar=1,subtitles={ass}",
-                "-af", filtro_som(),
+                "-af", "highpass=f=80,loudnorm=I=-16:TP=-1.5:LRA=11" if limpo else filtro_som(),
                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-maxrate", "5M", "-bufsize", "10M",
                 *COMPATIVEL, "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", saida,
             ],
