@@ -486,7 +486,7 @@ def cortar_grupo(cortes, base, videos, envios=()):
                 if caminho_audio:
                     proprio = ajuste_fino(caminho_audio, caminho_video, atraso,
                                           corte["inicio_ms"] / 1000, corte["fim_ms"] / 1000, pasta)
-                cortar_trecho(corte, frases, caminho_video, proprio, pasta, tamanho_video(caminho_video))
+                cortar_trecho(corte, frases, caminho_video, proprio, pasta, tamanho_video(caminho_video), caminho_audio)
             os.remove(caminho_video)
         if pendentes:
             nomes = ", ".join(v["nome"] or "?" for v in videos)
@@ -595,7 +595,12 @@ def enquadrar(corte, tamanho, caminho_video, ini, fim, pasta):
     return zoom, fx, fy
 
 
-def cortar_trecho(corte, frases, caminho_video, atraso, pasta, tamanho):
+# Som do corte: o da mesa de som (limpo, direto dos microfones) quando houver; senão o da câmera, que pega
+# o ambiente e chia. Nos dois: corta o grave do ar-condicionado, tira o chiado e iguala o volume.
+FILTRO_SOM = "highpass=f=80,afftdn=nr=12:nf=-40:tn=1,loudnorm=I=-16:TP=-1.5:LRA=11"
+
+
+def cortar_trecho(corte, frases, caminho_video, atraso, pasta, tamanho, caminho_audio=None):
     try:
         inicio = corte["inicio_ms"] / 1000
         fim = corte["fim_ms"] / 1000
@@ -610,8 +615,12 @@ def cortar_trecho(corte, frases, caminho_video, atraso, pasta, tamanho):
         subprocess.run(
             [
                 "ffmpeg", "-v", "error", "-y",
-                "-ss", f"{max(0, inicio + atraso):.2f}", "-i", caminho_video, "-t", f"{fim - inicio:.2f}",
+                "-ss", f"{max(0, inicio + atraso):.2f}", "-i", caminho_video,
+                *(["-ss", f"{inicio:.2f}", "-i", caminho_audio] if caminho_audio else []),
+                "-t", f"{fim - inicio:.2f}",
+                "-map", "0:v:0", "-map", "1:a:0" if caminho_audio else "0:a:0?",
                 "-vf", f"crop={w}:{h}:{x}:{y},scale=1080:1920:flags=lanczos,setsar=1,subtitles={ass}",
+                "-af", FILTRO_SOM,
                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-maxrate", "5M", "-bufsize", "10M",
                 *COMPATIVEL, "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", saida,
             ],
