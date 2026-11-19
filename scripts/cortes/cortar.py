@@ -611,7 +611,10 @@ def filtro_som():
         try:
             if not os.path.exists(destino):
                 urllib.request.urlretrieve(MODELO_VOZ, destino)
-            _filtro_som = (f"highpass=f=80,arnndn=m={destino}:mix=0.9,afftdn=nr=10:nf=-40:tn=1,lowpass=f=12000,"
+            # Duas passadas do redutor, chiado restante, corte acima de 8 kHz (voz não precisa) e um portão
+            # suave que silencia o fundo entre as palavras; por fim, volume igual em todos os cortes.
+            _filtro_som = (f"highpass=f=100,arnndn=m={destino}:mix=1,arnndn=m={destino}:mix=0.8,"
+                           "afftdn=nr=20:nf=-35:tn=1,lowpass=f=8000,agate=threshold=0.02:ratio=3:attack=5:release=200,"
                            "loudnorm=I=-16:TP=-1.5:LRA=11")
         except Exception as erro:  # noqa: BLE001
             print(f"Sem o redutor de ruído de voz ({erro}); usando o filtro simples.")
