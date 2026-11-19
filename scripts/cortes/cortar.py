@@ -598,6 +598,25 @@ def enquadrar(corte, tamanho, caminho_video, ini, fim, pasta):
 # Som do corte: o da mesa de som (limpo, direto dos microfones) quando houver; senão o da câmera, que pega
 # o ambiente e chia. Nos dois: corta o grave do ar-condicionado, tira o chiado e iguala o volume.
 FILTRO_SOM = "highpass=f=80,afftdn=nr=12:nf=-40:tn=1,loudnorm=I=-16:TP=-1.5:LRA=11"
+# Redutor de ruído de voz (RNNoise, modelo "conjoined-burgers" de GregorR/rnnoise-models): tira o chiado forte
+# que sobra em alguns painéis. Baixado na hora; se não vier, fica o filtro simples acima.
+MODELO_VOZ = "https://raw.githubusercontent.com/GregorR/rnnoise-models/master/conjoined-burgers-2018-08-28/cb.rnnn"
+_filtro_som = None
+
+
+def filtro_som():
+    global _filtro_som
+    if _filtro_som is None:
+        destino = os.path.join(tempfile.gettempdir(), "voz.rnnn")
+        try:
+            if not os.path.exists(destino):
+                urllib.request.urlretrieve(MODELO_VOZ, destino)
+            _filtro_som = (f"highpass=f=80,arnndn=m={destino}:mix=0.9,afftdn=nr=10:nf=-40:tn=1,lowpass=f=12000,"
+                           "loudnorm=I=-16:TP=-1.5:LRA=11")
+        except Exception as erro:  # noqa: BLE001
+            print(f"Sem o redutor de ruído de voz ({erro}); usando o filtro simples.")
+            _filtro_som = FILTRO_SOM
+    return _filtro_som
 
 
 def cortar_trecho(corte, frases, caminho_video, atraso, pasta, tamanho, caminho_audio=None):
@@ -620,7 +639,7 @@ def cortar_trecho(corte, frases, caminho_video, atraso, pasta, tamanho, caminho_
                 "-t", f"{fim - inicio:.2f}",
                 "-map", "0:v:0", "-map", "1:a:0" if caminho_audio else "0:a:0?",
                 "-vf", f"crop={w}:{h}:{x}:{y},scale=1080:1920:flags=lanczos,setsar=1,subtitles={ass}",
-                "-af", FILTRO_SOM,
+                "-af", filtro_som(),
                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-maxrate", "5M", "-bufsize", "10M",
                 *COMPATIVEL, "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", saida,
             ],
