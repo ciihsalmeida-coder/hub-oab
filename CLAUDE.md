@@ -111,6 +111,9 @@ português simples, um de cada vez, e nunca pedir para colar chaves/senhas no ch
   duas frases de autoridades foram parar no kit do Amyr; conferir pela voz antes de publicar. Card sem foco: foto em
   pé usa position "north" (não corta a cabeça). Contatos importados da planilha (palestrantes.email/whatsapp).
   Envio de kits: e-mail via Gmail só depois do ok da Cilene no texto; primeiro teste só para ela.
+- (19/11) Som dos cortes: vem do áudio da MESA (envio de áudio, alinhado), não da câmera (chiava/mudo no P6 e P9).
+  Filtro: loudnorm antes + RNNoise (arnndn, modelo cb.rnnn baixado na hora) 2x + afftdn + lowpass 8k + loudnorm.
+  Sem portão (agate cortava palavras baixas). Alinhamento: parte mais próxima que bate + ajuste_fino por corte.
 - Vídeos do robô: COMPATIVEL em cortar.py (estéreo, até 30 fps, H.264 High 4.1) — a Sony A7IV grava 4 canais/60p e o
   iPhone não tocava.
 
