@@ -632,7 +632,8 @@ def voz_limpa(caminho_audio, inicio, duracao_s, pasta, nome):
     saida = os.path.join(pasta, f"{nome}-df")
     try:
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{inicio:.2f}", "-t", f"{duracao_s:.2f}", "-i", caminho_audio,
-                        "-vn", "-ac", "1", "-ar", "48000", bruto], check=True)
+                        "-vn", "-ac", "1", "-ar", "48000", "-af", "highpass=f=80,loudnorm=I=-20:TP=-3:LRA=11", bruto],
+                       check=True)  # volume acertado antes: gravação muito baixa a IA confunde com ruído e apaga
         subprocess.run(["deepFilter", bruto, "-o", saida], check=True, capture_output=True, timeout=900)
         pronto = [os.path.join(saida, f) for f in os.listdir(saida) if f.endswith(".wav")]
         return pronto[0] if pronto else None
